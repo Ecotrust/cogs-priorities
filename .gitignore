@@ -33,9 +33,8 @@ anneal/backup/*
 *.prof
 *.working
 data/local/*
-tile_config/*.cfg
 tile_config/*.xml
-wsgi.py
+*wsgi.py
 env*
 marxan_bin/*
 logs/*
@@ -43,3 +42,5 @@ local_import.sh
 local_data.py
 MAINTENANCE_MODE
 .vagrant
+tile
+

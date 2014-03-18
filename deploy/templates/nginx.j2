@@ -38,7 +38,10 @@ server {
         uwsgi_pass unix:///var/run/uwsgi/app/{{ app_name }}/socket;
         include uwsgi_params;
     }
-
+    location /tiles/ {
+        uwsgi_pass unix:///var/run/uwsgi/app/tilestache-{{ app_name }}/socket;
+        include uwsgi_params;
+    }
     location /media/  {
         alias {{ project_path }}/mediaroot/;
     }

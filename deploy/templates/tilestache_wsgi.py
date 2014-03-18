@@ -2,9 +2,9 @@ import sys
 import site
 import os
 
-project = '/usr/local/apps/usfw2/priorities'
-ve = '/usr/local/apps/usfw2/env-usfw2'
-vepath = os.path.join(ve, 'lib/python2.6/site-packages')
+project = '{{ project_path }}/priorities'
+ve = '{{ venv_path }}'
+vepath = os.path.join(ve, 'lib/python2.7/site-packages')
 
 prev_sys_path = list(sys.path)
 # add the site-packages of our virtualenv as a site dir
@@ -20,4 +20,4 @@ for item in new_sys_path:
 sys.path[:0] = new_sys_path
 
 import TileStache
-application = TileStache.WSGITileServer('/usr/local/apps/usfw2/tile_config/tiles.cfg')
+application = TileStache.WSGITileServer('{{ project_path }}/tile_config/tiles.cfg')

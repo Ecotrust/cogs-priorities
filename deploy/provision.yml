@@ -164,8 +164,15 @@
       notify: restart uwsgi
       template: src=templates/uwsgi.init.j2 dest=/etc/init.d/uwsgi owner=root group=root mode=0755
 
+    - name: install wsgi script for TileStache
+      template: src=templates/tilestache_wsgi.py dest={{ project_path }}/tilestache_wsgi.py owner={{ remote_user }} group={{ remote_user }} mode=0755
 
-  # TODO tilestache
+    - name: install uwsgi app for tilestache
+      notify: restart uwsgi
+      template: src=templates/tilestache_uwsgi.ini dest=/etc/uwsgi/apps-available/tilestache-{{ app_name }}.ini owner=root group={{ remote_user }} mode=0754
+
+    - name: enable uwsgi app for tilestache
+      file: src=/etc/uwsgi/apps-available/tilestache-{{ app_name }}.ini dest=/etc/uwsgi/apps-enabled/tilestache-{{ app_name }}.ini owner=root group={{ remote_user }} state=link
 
   handlers: 
     - name: restart supervisor
