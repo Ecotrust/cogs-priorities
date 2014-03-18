@@ -1,0 +1,46 @@
+geo $maintenance_ip {
+    default 0;
+    127.0.0.1/24    1;  # TODO replace with your internal IP block
+}
+
+server {
+    client_max_body_size 20M;
+
+    # A special wildcard name in the form .example.org can be used to match
+    # both the exact name example.org and the wildcard name *.example.org
+    # server_name .sdfsfsdf; # TODO {{ domain }}
+    
+    access_log /var/log/nginx/{{ app_name }}.access.log;
+    error_log /var/log/nginx/{{ app_name }}.error.log;
+
+    if ($http_host ~ "\.$" ){
+        rewrite ^(.*) http://$host$1 permanent;
+    }
+
+    ### Start Maintenance mode
+    if ($maintenance_ip = 0) {
+        set $maintenance y;
+    }
+    if (-f /tmp/.maintenance_mode) {
+        set $maintenance y$maintenance;
+    }
+    if ($maintenance = yy) {
+        return 503;
+    }
+    error_page 503 @maintenance;
+    location @maintenance {
+        root {{ project_path }}/mediaroot;
+        rewrite ^(.*)$ /maintenance.html break;
+    }
+    ### End Maintenance mode
+
+    location / {
+        uwsgi_pass unix:///var/run/uwsgi/app/{{ app_name }}/socket;
+        include uwsgi_params;
+    }
+
+    location /media/  {
+        alias {{ project_path }}/mediaroot/;
+    }
+
+}

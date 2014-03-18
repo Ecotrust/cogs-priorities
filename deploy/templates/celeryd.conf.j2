@@ -2,13 +2,13 @@
 ;  celery worker supervisor example for Django
 ; ==============================================
 
-[program:celeryd]
-command=/usr/local/venv/priorities/bin/python /usr/local/apps/madrona-priorities/priorities/manage.py celeryd --loglevel=INFO
-directory=/usr/local/apps/madrona-priorities/priorities
-user=vagrant
+[program:celeryd-{{ app_name }}]
+command={{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py celeryd --loglevel=WARNING
+directory={{ project_path }}/priorities
+user={{ remote_user }}
 numprocs=1
-stdout_logfile=/usr/local/apps/madrona-priorities/logs/celeryd.log
-stderr_logfile=/usr/local/apps/madrona-priorities/logs/celeryd.log
+stdout_logfile=/var/log/celeryd-{{ app_name }}.log
+stderr_logfile=/var/log/celeryd-{{ app_name }}.log
 autostart=true
 autorestart=true
 startsecs=10

@@ -1,0 +1,181 @@
+---
+- name: initial setup of the priorities tool
+  hosts: dev 
+  connection: ssh
+  remote_user: "{{ remote_user }}"
+  sudo: yes
+
+  vars:
+    app_name: cogs-priorities
+    venv_path: '/usr/local/venv/cogs-priorities'
+    project_path: '/usr/local/apps/cogs-priorities'
+    dbname: 'cogs'
+    webuser: www-data
+    debug: 'True'
+    domain: 'localhost'
+
+  tasks:
+
+    - name: Get aptitude for upgrade
+      apt: pkg=aptitude state=present
+
+    - name: Pycurl dep to run upgrade
+      apt: pkg=python-pycurl state=present
+
+    - name: Safe system upgrade via aptitude
+      apt: upgrade=safe update_cache=yes cache_valid_time=604800
+
+    - name: add Mapnik repo
+      apt_repository: repo='ppa:mapnik/v2.2.0' state=present update_cache=yes
+
+    - name: install base packages
+      apt: pkg={{ item }} state=present
+      with_items:
+        - build-essential
+        - csstidy
+        - git-core
+        - gdal-bin
+        - gfortran
+        - htop
+        - libmapnik
+        - libopenblas-dev
+        - liblapack-dev
+        - libgeos-dev
+        - libgdal1-dev
+        - libpq-dev
+        - mercurial
+        - mapnik-utils
+        - nginx-full
+        - postgresql
+        - postgresql-9.1-postgis
+        - python-dev
+        - python-psycopg2
+        - python-mapnik
+        - python-software-properties
+        - python-psycopg2
+        - python-virtualenv
+        - python-numpy
+        - python-scipy
+        - python-gdal
+        - redis-server
+        - subversion
+        - supervisor
+        - sysstat
+        - uwsgi
+        - vim
+
+    - name: create celery config for supervisor
+      notify: restart supervisor
+      template: src=templates/celeryd.conf.j2 dest=/etc/supervisor/conf.d/celeryd-{{ app_name }}.conf owner=root group={{ remote_user }} mode=0644
+      #copy: src=files/foo.conf dest=/etc/file.conf owner=bin group=wheel mode=0644
+
+    - name: Install python requirements
+      pip: name={{item}} state=present virtualenv={{ venv_path }} virtualenv_site_packages=yes
+      with_items:
+        - xlrd
+        - django<1.5
+        - django-redis-sessions
+        - python-memcached
+        - modestmaps
+        - django-celery
+        - celery
+        - django-redis
+        - redis
+        - kombu
+        - wsgi>=1.2.6
+        - 'git+https://github.com/Ecotrust/madrona.git@master#egg=madrona'
+        - 'git+git://github.com/perrygeo/TileStache.git@master#egg=TileStache'
+
+    - name: go script
+      template: src=templates/go.j2 dest=/home/{{ remote_user }}/go owner={{ remote_user }} group={{ remote_user }} mode=0755
+
+    - name: settings local
+      template: src=templates/settings_local.py dest={{ project_path }}/priorities/settings_local.py owner={{ remote_user }} group={{ remote_user }} mode=0755
+
+    - name: sql script to fix postgres perms
+      template: src=templates/fix_perms.sql dest=/tmp/fix_perms.sql mode=0755
+
+    - name: copy cleangeometry
+      copy: src=files/cleangeometry.sql dest=/tmp/cleangeometry.sql mode=0755
+
+    - name: create db user  
+      sudo_user: postgres
+      # same as dbname
+      postgresql_user: name={{ dbname }} password={{ dbname }} role_attr_flags=CREATEDB,NOSUPERUSER
+
+    - name: create postgres db
+      sudo_user: postgres
+      postgresql_db: name={{ dbname }}
+                     owner={{ dbname }}
+                     template='template0'
+
+    - name: load postgis
+      sudo_user: postgres
+      command: /usr/bin/psql -d {{ dbname }} -f /usr/share/postgresql/9.1/contrib/postgis-1.5/postgis.sql
+
+    - name: load spatial_ref_sys
+      sudo_user: postgres
+      command: /usr/bin/psql -d {{ dbname }} -f /usr/share/postgresql/9.1/contrib/postgis-1.5/spatial_ref_sys.sql
+
+    - name: load cleangeometry
+      sudo_user: postgres
+      command: /usr/bin/psql -d {{ dbname }} -f /tmp/cleangeometry.sql
+
+    - name: postgis perms
+      sudo_user: postgres
+      command: /usr/bin/psql -d {{ dbname }} -f /tmp/fix_perms.sql 
+
+    - name: syncdb
+      command: "{{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py syncdb --noinput"
+
+    - name: migrate 
+      command: "{{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py migrate --noinput"
+
+    - name: install media
+      command: "{{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py install_media"
+
+    - name: enable sharing 
+      command: "{{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py enable_sharing --all"
+
+    - name: install uwsgi app
+      notify: restart uwsgi
+      template: src=templates/uwsgi.ini dest=/etc/uwsgi/apps-available/{{ app_name }}.ini owner=root group={{ remote_user }} mode=0754
+
+    - name: enable uwsgi app
+      file: src=/etc/uwsgi/apps-available/{{ app_name }}.ini dest=/etc/uwsgi/apps-enabled/{{ app_name }}.ini owner=root group={{ remote_user }} state=link
+
+    - name: install nginx site 
+      notify: restart nginx
+      template: src=templates/nginx.j2 dest=/etc/nginx/sites-available/{{ app_name }} owner=root group={{ remote_user }} mode=0754
+
+    - name: enable nginx site
+      file: src=/etc/nginx/sites-available/{{ app_name }} dest=/etc/nginx/sites-enabled/{{ app_name }} owner=root group={{ remote_user }} state=link
+
+    - name: remove default site
+      file: path=/etc/nginx/sites-enabled/default state=absent
+
+    - name: stupid uwsgi hack
+      file: path=/usr/lib/uwsgi/plugins state=directory
+
+    - name: postgres writable
+      file: path={{ project_path }}/marxan_output/template owner=postgres state=directory mode=755
+
+    - name: uwsgi init script to use venv version of uwsgi
+      notify: restart uwsgi
+      template: src=templates/uwsgi.init.j2 dest=/etc/init.d/uwsgi owner=root group=root mode=0755
+
+
+  # TODO tilestache
+
+  handlers: 
+    - name: restart supervisor
+      action: service name=supervisor state=restarted
+
+    - name: restart celery
+      action: supervisorctl name=celeryd-{{ app_name }} state=restarted
+
+    - name: restart nginx
+      action: service name=nginx state=restarted
+
+    - name: restart uwsgi
+      action: service name=uwsgi state=restarted
