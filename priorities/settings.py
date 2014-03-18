@@ -1,13 +1,13 @@
 # Django settings for omm project.
 from madrona.common.default_settings import *
 
-APP_NAME = "Madrona Priorities Tool"
+APP_NAME = "usfw2"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'juniper',
+        'NAME': 'wp',
         'USER': 'postgres', }
 }
 
@@ -55,11 +55,11 @@ STATICMAP_HEIGHT_BUFFER = None
 
 CELERY_IMPORT = ('seak.tasks',)
 
-MARXAN_BIN =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_bin', 'MarOpt_v243_Linux32')) # or 64 bit?
+MARXAN_BIN =  '/usr/local/marxan243/MarOpt_v243_Linux32' # or 64 bit?
 MARXAN_OUTDIR =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_output'))
 MARXAN_TEMPLATEDIR = os.path.join(MARXAN_OUTDIR, 'template')
 MARXAN_NUMREPS = 20
-MARXAN_NUMITNS = 1000000
+MARXAN_NUMITNS = 2000000
 
 LOG_FILE = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'logs', 'seak.log'))
 MEDIA_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'mediaroot'))
@@ -102,21 +102,21 @@ SLIDER_SHOW_RAW = False
 SLIDER_SHOW_PROPORTION = True
 SLIDER_START_COLLAPSED = False
 VARIABLE_GEOGRAPHY = True # do we allow variable geographies (True) or just use all planning units (False)?
-SHOW_RAW_COSTS = True # in report
-SHOW_AUX = True # in report
+SHOW_RAW_COSTS = False # in report
+SHOW_AUX = False # in report
 SHOW_GOAL_MET = True # in report
 
 JS_OPTS = {
     'start_zoom': 6,  
-    'num_levels': 7,  
-    'center': {'lon': -120.2, 'lat': 45.5},
-    'extent': [-126.1, 40.9, -116.0, 49.6],
-    'name_field': 'WATERSHED_',
+    'num_levels': 8,  
+    'center': {'lon': -118.2, 'lat': 45.5},
+    'extent': [-127.1, 40.0, -106.0, 51.0],
+    'name_field': 'SUBBASIN',
     'sigfigs': 3,
     'zoom_on_select': False,
 }
 
-ADD_SCALEFACTOR_CONSTANT = 3 # 0==moderately weight costs, 5==meet targets at (almost) any cost
+ADD_SCALEFACTOR_CONSTANT = 5 # 0==moderately weight costs, 5==meet targets at (almost) any cost
 
 CACHE_TIMEOUT = 60 * 60 * 24 * 365
 
@@ -154,4 +154,3 @@ if DEBUG:
         INSTALLED_APPS += ('gunicorn',)
     except ImportError:
         pass
-

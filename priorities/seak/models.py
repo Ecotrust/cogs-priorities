@@ -282,7 +282,10 @@ class Scenario(Analysis):
 
     @property
     def outdir(self):
-        return os.path.realpath(os.path.join(settings.MARXAN_OUTDIR, "%s_" % (self.uid,) ))
+        # make sure we only get 1000 scenarios per subdirectory 
+        # some filesystems (ext2/3) have a 32000 limit on number of directories; this raises it to 32 mil
+        subdir = str(int(self.id / 1000.0))
+        return os.path.realpath(os.path.join(settings.MARXAN_OUTDIR, subdir, "%s_" % (self.uid,) ))
         # This is not asycn-safe! A new modificaiton will clobber the old. 
         # What happens if new and old are both still running - small chance of a corrupted mix of output files? 
 
@@ -549,13 +552,19 @@ class Scenario(Analysis):
             scaled_costs[costslug] = pucosts
             scaled_breaks[costslug] = get_jenks_breaks(scaled_values, 3)
 
+        sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid') if x.slug in scaled_costs.keys()]
+        
+        summed_costs = {}
         for pu in bestpus:
             centroid = pu.centroid 
-            costs = {}
+            costs = []
             raw_costs = dict([(x.cost.slug, x.amount) for x in pu.puvscost_set.all()])
-            for cname, pucosts in scaled_costs.iteritems():
+
+            for cname in sorted_cost_keys:
+                pucosts = scaled_costs[cname]
                 thecost = pucosts[pu.fid]
                 breaks = scaled_breaks[cname]
+
                 # classify the costs into categories
                 if thecost <=  breaks[1]:
                     theclass = 'low'
@@ -563,7 +572,12 @@ class Scenario(Analysis):
                     theclass = 'high'
                 else:
                     theclass = 'med' 
-                costs[cname] = {'raw': raw_costs[cname],'scaled': thecost, 'class': theclass}
+                costs.append({'name': cname, 'raw': raw_costs[cname],'scaled': thecost, 'class': theclass})
+
+                if summed_costs.has_key(cname):
+                    summed_costs[cname] += raw_costs[cname]
+                else: 
+                    summed_costs[cname] = raw_costs[cname]
 
             auxs = dict([(x.aux.name, x.value) for x in pu.puvsaux_set.all()])
 
@@ -575,9 +589,6 @@ class Scenario(Analysis):
                          'centroidy': centroid[1]})
 
         sum_area = sum([x.area for x in bestpus])
-        summed_costs = {}
-        for c in scaled_costs.keys(): # just use to get the keys
-            summed_costs[c] = sum(x['costs'][c]['raw'] for x in best)
 
         # Parse mvbest
         fh = open(os.path.join(self.outdir, "output", "seak_mvbest.csv"), 'r')
@@ -629,6 +640,35 @@ class Scenario(Analysis):
             name = k.replace("-", " ").title()
             costs[name] = v
 
+        surrogate = {
+            'species_targeted': 0,
+            'species_represented': 0, 
+            'species_missed': 0, 
+            'species_under_represented': 0, 
+        }
+        score = 0
+
+        tp = [s['target_prop'] for s in species if s['target_prop'] > 0]
+        avg_target = sum(tp) / float(len(tp))
+        surrogate['avg_target'] = avg_target
+     
+        for s in species:
+            if s['target'] > 0 and s['target_prop'] > 0:
+                surrogate['species_targeted'] += 1
+                score += 2
+            else:
+                if s['pcttotal'] >= avg_target:
+                    surrogate['species_represented'] += 1
+                    score += 0 
+                elif s['pcttotal'] < 0.00001:
+                    surrogate['species_missed'] += 1
+                    score += 2
+                else:
+                    surrogate['species_under_represented'] += 1
+                    score += (avg_target - s['pcttotal']) / avg_target
+
+        surrogate['objective_score'] = score
+
         res = {
             'costs': costs, #cost_weights
             'geography': geography,
@@ -641,6 +681,7 @@ class Scenario(Analysis):
             'units': best,
             'species': species, 
             'bbox': bbox,
+            'surrogate': surrogate,
         }
 
         return res
@@ -860,7 +901,7 @@ class Scenario(Analysis):
         form_context = {
             'cfs': ConservationFeature.objects.all().order_by('level1', 'name'),
             'defined_geographies': DefinedGeography.objects.all(),
-            'costs': Cost.objects.all().order_by('name'),
+            'costs': Cost.objects.all().order_by('uid'),
             'slider_mode': settings.SLIDER_MODE,
             'slider_show_raw': settings.SLIDER_SHOW_RAW,
             'slider_show_proportion': settings.SLIDER_SHOW_PROPORTION,
@@ -897,7 +938,7 @@ def _scenario_delete(sender, instance, **kwargs):
             shutil.rmtree(instance.outdir)
             logger.debug("Deleting %s at %s" % (instance.uid, instance.outdir))
         except OSError:
-            logger.debug("Can't deleting %s; forging ahead anyway..." % (instance.uid,))
+            logger.debug("Can't delete %s; forging ahead anyway..." % (instance.uid,))
 
 @register
 class Folder(FeatureCollection):

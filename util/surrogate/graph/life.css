@@ -1,0 +1,109 @@
+/* Normalize */
+body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, figure, form, fieldset, input, p, blockquote, th, td, legend {
+	margin: 0;
+	padding: 0;
+}
+body {
+    padding-top: 20px; 
+    background-color: #e2e2e4 !important;
+}
+.well {
+    background: white !important; 
+}
+p { line-height: 1.4em; margin-bottom: 1.0em; }
+a { color: #821122; }
+#content {
+    width: 925px;
+    margin: 0 auto;
+}
+#filters {
+    font-family: Arial, sans-serif;
+    margin-bottom: 20px;
+}
+#filters a {
+    color: #000;
+    font-size: 12px;
+    padding: 5px;
+    background: #e2e2e2;
+    cursor: pointer;
+    margin-right: 3px;
+}
+#filters a:last-child {
+    margin-right: 0;
+}
+
+#text-filters {
+    font-family: Arial, sans-serif;
+    margin-bottom: 2px;
+    float: right;
+}
+ #text-filter {
+    height: 16px; 
+    width: 146px; 
+ }
+
+#vis {
+    min-height: 550px;
+    border-top: 1px solid #e2e2e2; 
+}
+
+#blurb {
+    height: 20px;
+    padding-top: 5px;
+    padding-left: 65px;
+    float:right;
+}
+
+path {
+    stroke: #a2a2a2;
+    stroke-width: 2.9;
+    stroke-opacity: 0.1;
+	fill: none;
+}
+path.current, path.highlight.current {
+    stroke: #000;
+    stroke-width: 2.2;
+    stroke-opacity: 1.0;
+    z-index: 999999 !important;
+}
+.highlight { 
+    stroke-opacity: 1.0;
+    z-index: 999999 !important; 
+    stroke-width: 2.2px; 
+} 
+
+.widespread-salmon.highlight { stroke: #895881; }
+.widespread-steelhead.highlight { stroke: #ED7C31; }
+.widespread-trout.highlight { stroke: #82A5C0; }
+.widespread-lamprey.highlight { stroke: #00BBD6; }
+.locally-endemic.highlight { stroke: #6E9E75; }
+
+#filters a.widespread-salmon { background: #895881; color: #fff; }
+#filters a.widespread-steelhead { background: #ED7C31; color: #fff; }
+#filters a.widespread-trout { background: #82A5C0; color: #fff; }
+#filters a.widespread-lamprey { background: #00BBD6; color: #fff; }
+#filters a.locally-endemic { background: #6E9E75; color: #fff; }
+
+line {
+    stroke: black;
+}
+
+text {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 11px;
+}
+.axis {
+    stroke-width: 0.8;
+    stroke: #000;
+}
+.xTicks, .yTicks {
+    stroke-width: 0.6;
+    stroke: #000;
+}
+
+.label {
+    font-size: 12pt;
+}
+
+#cite { font-size: 0.8em; text-align: right; margin-top:10px; padding-bottom: 20px; }
+#cite a { background: #e2e2e2; text-decoration: none; color: #821122; }

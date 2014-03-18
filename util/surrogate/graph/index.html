@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Surrogate Species</title>
+	<link rel="stylesheet" type="text/css" href="./life.css" />
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	<script type="text/javascript" src="d3.js"></script>
+	<script type="text/javascript" src="d3.time.js"></script>
+	<script type="text/javascript" src="d3.csv.js"></script>
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.min.css" rel="stylesheet">
+  </head>
+<body>
+<div id="main-wrapper">
+    <div class="well" id="content">
+        <div style="float:right"><img src="./ecotrust.jpg" title="Ecotrust" width="50" height="50" / ></div>
+        <h1>Surrogate Species</h1>
+        <p>Conserving landscape-scale habitats on a species-by-species basis is impractical. Instead we can target conservation of a select group of "surrogate species" while still supporting habitat for a wide range of species.</p>      
+        <p>Here we show how the target proportion of habitat protected for single species affects the number of additional species represented in that prioritization scenario. For example, we see that targeting 20% of the Bull Trout habitat also represents habitat for 40 different species.</p>      
+        <div id="text-filters">
+            <input type="text" id="text-filter" placeholder="Species search"></input> 
+        </div>
+        <div id="filters">
+            <!-- <a id="EAS">East Asia and Pacific</a> -->
+        </div><!-- @end #filters -->
+
+        <div id="blurb">
+            <div id="default-blurb"><p class="text-success"><em>Mouse over graph to indentify individual species/ESUs</em></p></div>
+            <div id="blurb-content"></div>
+        </div>
+
+        <div id="vis"></div>
+        <div id="cite">Source: Ecotrust</div>
+        
+    </div><!-- @end content -->
+</div><!-- @end #main-wrapper -->
+<script type="text/javascript" src="./life.js"></script>
+</body>
+</html>

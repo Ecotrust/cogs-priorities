@@ -2,24 +2,24 @@ from __future__ import with_statement
 from fabric.api import *
 from fabric.contrib.console import confirm
 from local_data import *
-import os
+import posixpath
 
-APP = 'nplcc'
+APP = 'usfw2'
 BRANCH = APP
-STACHE_DIR = "/tmp/nplcc-stache" 
+STACHE_DIR = "/tmp/usfw2-stache" 
 ME = 'mperry'
 env.directory = '/usr/local/apps/%s' % APP
 env.hosts = ['ninkasi.ecotrust.org']
-env.activate = 'source %s' % os.path.join(env.directory, 'env-%s' % APP,'bin','activate')
+env.activate = 'source %s' % posixpath.join(env.directory, 'env-%s' % APP,'bin','activate')
 env.deploy_user = 'www-data'
 
 
 def virtualenv(command, user=None):
     with cd(env.directory):
         if not user:
-            run(env.activate + '&&' + command)
+            run(env.activate + ' && ' + command)
         else:
-            sudo(env.activate + '&&' + command, user=user)
+            sudo(env.activate + ' && ' + command, user=user)
 
 def maintenance_on():
     """
@@ -40,13 +40,17 @@ def fix_permissions():
     Make sure all directories have appropriate permissions
     """
     with cd(env.directory):
+        run("mkdir -p marxan_output/template")
         sudo("chgrp www-data -R marxan_output")
         sudo("chmod 775 -R marxan_output")
         sudo("chmod 777 marxan_output/template") # TODO probably a better way to handle this
-        run("sudo chown www-data -R %s" % STACHE_DIR)
-        run("sudo chmod 755 -R %s" % STACHE_DIR)
+        run("mkdir -p %s" % STACHE_DIR)
+        run("sudo chown www-data:www-data -R %s" % STACHE_DIR)
+        run("sudo chmod 775 -R %s" % STACHE_DIR)
         run("sudo chown www-data:%s -R mediaroot" % ME)
         run("sudo chmod 775 -R mediaroot")
+        run("sudo chown root:www-data -R logs")
+        run("sudo chmod 775 -R logs")
 
 
 def deploy():
@@ -83,7 +87,7 @@ def import_dataset():
         # upload data if not there already
         #with settings(warn_only=True):
         #    if run("test -d priorities/data/%s" % dirname).failed:
-        put(local_data_dir, 'priorities/data/')  
+        #put(local_data_dir, 'priorities/data/')  
 
         # Clear server cache
         virtualenv("python priorities/manage.py clear_cache")
@@ -120,9 +124,15 @@ def import_dataset():
     print "###########################################################"
 
 def local_import():
-        command = "python manage.py import_planning_units \
-                %(data)s/%(pu_simple)s \
-                %(data)s/%(xls)s \
-                %(data)s/%(pu)s" % {'data': local_data_dir, 'pu_simple': pu_simple, 'xls': xls, 'pu': pu }
-        local(env.activate + '&&' + command)
+        command = """python manage.py import_planning_units \\
+                %(data)s/%(pu_simple)s \\
+                %(data)s/%(xls)s \\
+                %(data)s/%(pu)s""" % {'data': local_data_dir, 'pu_simple': pu_simple, 'xls': xls, 'pu': pu }
+        print "--------"
+        print command
+        print "--------"
 
+
+"""
+pip install -I -U --force-reinstall -r requirements.txt
+"""

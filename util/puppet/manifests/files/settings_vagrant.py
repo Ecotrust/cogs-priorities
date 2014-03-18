@@ -26,5 +26,6 @@ logging.getLogger('django.db.backends').setLevel(logging.ERROR)
 import os
 LOG_FILE = os.path.join(os.path.dirname(__file__),'..','seak.log')
 
+MARXAN_BIN =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_bin', 'MarOpt_v243_Linux32')) # or 64 bit?
 MARXAN_OUTDIR =  '/home/vagrant/marxan_output'  # for vagrant boxes, put this outside the shared dir so we can symlink
 MARXAN_TEMPLATEDIR = os.path.join(MARXAN_OUTDIR, 'template')
