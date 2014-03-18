@@ -7,7 +7,7 @@ example_projects/test_project/mediaroot/*
 docs/.build/*
 .coverage
 TEST*.xml
-*settings_local.py
+priorities/settings_local.py
 build/*
 dist/*
 *.swp
