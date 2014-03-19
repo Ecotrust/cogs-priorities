@@ -82,6 +82,7 @@
         - django-celery
         - celery
         - django-redis
+        - celery-with-redis
         - redis
         - kombu
         - uwsgi>=1.2.6
@@ -197,8 +198,8 @@
     - name: stupid uwsgi hack
       file: path=/usr/lib/uwsgi/plugins state=directory
 
-    - name: postgres writable
-      file: path={{ project_path }}/marxan_output/template owner=postgres state=directory mode=755
+    - name: template dir writable
+      file: path={{ project_path }}/marxan_output/template owner={{ remote_user }} state=directory mode=755
 
     - name: uwsgi init script to use venv version of uwsgi
       notify: restart uwsgi
@@ -221,7 +222,7 @@
       debug: msg={{ manage_with_git }}
 
     - name: copy data
-      when: manage_with_git
+      when: (manage_with_git | bool and newdata | bool)
       #sudo_user: "{{ remote_user }}"
       copy: src=../data dest={{ project_path }}
 
@@ -230,24 +231,32 @@
       when: newdata is defined and newdata
       notify: 
         - restart supervisor
-        - restart celery
+        # - restart celery
         - restart nginx
         - restart uwsgi
       sudo_user: "{{ remote_user }}"
-      command: "{{ manage }} import_planning_units {{ project_path }}/data/planning_units_simple.shp {{ project_path }}/data/metrics.xls {{ project_path }}/data/planning_units.shp"
+      command: "{{ manage }} import_planning_units {{ project_path }}/data/planning_units_simple.shp {{ project_path }}/data/metrics.xls {{ project_path }}/data/planning_units_full.shp"
+
+    - name: clear redis cache
+      when: newdata is defined and newdata
+      command: "redis-cli FLUSHDB"
+
+    - name: clear django cache
+      when: newdata is defined and newdata
+      command: "{{manage}} clear_cache"
 
     # handler to restart services (common include to provision.yml)
-    - name: supervisor
-      action: service name=supervisor state=started
+    # - name: supervisor
+    #   action: service name=supervisor state=started
 
-    - name: celery
-      action: supervisorctl name=celeryd-{{ app_name }} state=started
+    # - name: celery
+    #   action: supervisorctl name=celeryd-{{ app_name }} state=started
 
-    - name: nginx
-      action: service name=nginx state=started
+    # - name: nginx
+    #   action: service name=nginx state=started
 
-    - name: uwsgi
-      action: service name=uwsgi state=started  # started doesn't do the trick with multiple uwsgi apps?
+    # - name: uwsgi
+    #   action: service name=uwsgi state=started  # started doesn't do the trick with multiple uwsgi apps?
 
     # - name: restart
     #   tags:
@@ -265,11 +274,11 @@
     - name: restart supervisor
       action: service name=supervisor state=restarted
 
-    - name: restart celery
-      action: supervisorctl name=celeryd-{{ app_name }} state=restarted
+    # - name: restart celery
+    #   action: supervisorctl name=celeryd-{{ app_name }} state=restarted
 
     - name: restart nginx
-      action: service name=nginx state=restarted
+      action: service name=nginx state=reloaded
 
     - name: restart uwsgi
       action: service name=uwsgi state=restarted

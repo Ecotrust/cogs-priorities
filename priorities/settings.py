@@ -74,23 +74,41 @@ TEMPLATE_DEBUG = False
 LOGIN_REDIRECT_URL = '/'
 HELP_EMAIL = 'ksdev@ecotrust.org'
 
+# Use redis_sessions 
+SESSION_ENGINE = 'redis_sessions.session'
+SESSION_REDIS_HOST = 'localhost'
+SESSION_REDIS_PORT = 6379
+SESSION_REDIS_DB = 0
+SESSION_REDIS_PREFIX = 'priorities-session'
+
+# Redis for caching
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'juniper-cache', 
+    "default": {
+        "BACKEND": "redis_cache.cache.RedisCache",
+        "LOCATION": "127.0.0.1:6379:2",
+        "OPTIONS": {
+            "CLIENT_CLASS": "redis_cache.client.DefaultClient",
+        }
     }
 }
 
-# Use redis_sessions if available
-try:
-    import redis_sessions
-    SESSION_ENGINE = 'redis_sessions.session'
-    SESSION_REDIS_HOST = 'localhost'
-    SESSION_REDIS_PORT = 6379
-    SESSION_REDIS_DB = 0
-    SESSION_REDIS_PREFIX = 'priorities-session'
-except ImportError:
-    pass
+# Redis for celery
+BROKER_URL = 'redis://localhost:6379/3'
+BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 43200}  # 12 hours
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/4'
+CELERY_ALWAYS_EAGER = False
+CELERY_DISABLE_RATE_LIMITS = True
+from datetime import timedelta
+CELERYBEAT_SCHEDULE = {
+    'sweep_for_errors': {
+        'task': 'sweep_for_errors',
+        'schedule': timedelta(seconds=600),
+        'args': None
+    },
+}
+CELERY_TIMEZONE = 'UTC'
+import djcelery
+djcelery.setup_loader()
 
 import logging
 LOG_LEVEL = logging.INFO
@@ -130,6 +148,8 @@ except ImportError:
 DATABASE_ENGINE = DATABASES['default']['ENGINE']
 DATABASE_NAME = DATABASES['default']['NAME']
 DATABASE_USER = DATABASES['default']['USER']
+
+
 
 if not os.path.exists(MEDIA_ROOT):
     os.makedirs(MEDIA_ROOT)

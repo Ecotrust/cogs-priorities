@@ -39,6 +39,7 @@ server {
         include uwsgi_params;
     }
     location /tiles/ {
+        rewrite  ^/tiles/(.*)  /$1 break;
         uwsgi_pass unix:///var/run/uwsgi/app/tilestache-{{ app_name }}/socket;
         include uwsgi_params;
     }

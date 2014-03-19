@@ -305,7 +305,11 @@ class Command(BaseCommand):
         all_dbf_fieldnames.append(params['name_field'])
 
         cfg = {
-            "logging": "warning",
+            "logging": "debug",
+            # "cache": {
+            #     "name": "Test",
+            #     "verbose": True
+            # },
             "cache": {
                 "name": "Redis",
                 "host": "localhost",
@@ -396,7 +400,7 @@ class Command(BaseCommand):
 
         with open(os.path.join(settings.TILE_CONFIG_DIR, 'tiles.cfg'), 'w') as fh:
             print "  writing tiles.cfg"
-            fh.write(json.dumps(cfg))
+            fh.write(json.dumps(cfg, indent=2))
 
         print 
         print "Populating theme and layers for the layer manager"
@@ -533,15 +537,22 @@ class Command(BaseCommand):
         out = os.path.realpath(os.path.join(settings.MARXAN_TEMPLATEDIR, 'puvcf.dat'))
         print "Exporting the table to %s" % out
         query = """
-            COPY (SELECT cf_id as species, pu_id as pu, amount 
-                FROM %s_puvscf
-                ORDER BY pu)
-            TO '%s'
-            WITH DELIMITER ','
-            CSV HEADER
-        """ % (app, out)
+            SELECT cf_id as species, pu_id as pu, amount 
+            FROM %s_puvscf
+            ORDER BY pu
+        """ % (app,)
+        # TO '%s'
+        # WITH DELIMITER ','
+        # CSV HEADER
+
         from django.db import connection
-        cursor = connection.cursor()
-        cursor.execute(query)
+        with open(out, 'w') as fh:
+            fh.write("species,pu,amount\n")
+
+            cursor = connection.cursor()
+            cursor.execute(query)
+            for row in cursor.fetchall():
+                fh.write(','.join([str(x) for x in row]))
+                fh.write("\n")
         
    
