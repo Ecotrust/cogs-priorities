@@ -89,16 +89,19 @@
         - 'git+git://github.com/perrygeo/TileStache.git@master#egg=TileStache'
 
     - name: git checkout
-      sudo_user: '{{ remote_user }}'
       when: manage_with_git
       git: repo=https://github.com/Ecotrust/cogs-priorities.git
            dest={{ project_path }}
            version=master
+      tags: 
+        - deploy
 
     - name: go script
       template: src=templates/go.j2 dest=/home/{{ remote_user }}/go owner={{ remote_user }} group={{ remote_user }} mode=0755
 
     - name: settings local
+      tags:
+        - deploy
       template: src=templates/settings_local.py dest={{ project_path }}/priorities/settings_local.py owner={{ remote_user }} group={{ remote_user }} mode=0755
 
     - name: sql script to fix postgres perms
@@ -143,13 +146,24 @@
       when: postgres_create_returncode['changed']
 
     - name: syncdb
+      tags:
+        - deploy
       command: "{{ manage }} syncdb --noinput"
 
     - name: migrate 
+      tags:
+        - deploy
       command: "{{ manage }} migrate --noinput"
 
     - name: install media
+      tags:
+        - deploy
       command: "{{ manage }} install_media"
+
+    - name: site
+      tags:
+        - deploy
+      command: "{{ manage }} site {{ domain }}"
 
     - name: enable sharing 
       command: "{{ manage }} enable_sharing --all"
@@ -200,23 +214,27 @@
     - name: enable uwsgi app for tilestache
       file: src=/etc/uwsgi/apps-available/tilestache-{{ app_name }}.ini dest=/etc/uwsgi/apps-enabled/tilestache-{{ app_name }}.ini owner=root group={{ remote_user }} state=link
 
-
-    # COPY data
+    # COPY datasets
     # depends on the "newdata" variable being defined at the command line
     #    .... -extra-vars "newdata=true"
-    # - name: copy data
-    #   when: newdata is defined
+    - name: debugit
+      debug: msg={{ manage_with_git }}
 
-    # Trigger restart handlers if git was updated or we're on vagrantbox
+    - name: copy data
+      when: manage_with_git
+      #sudo_user: "{{ remote_user }}"
+      copy: src=../data dest={{ project_path }}
 
-    # handler to install data
     # INSTALL data
-    # vars['data_dir']  = posixpath.join(vars['app_dir'], '..', 'testdata')
-    # run('cd %(app_dir)s && %(venv)s/bin/python manage.py \
-    #         import_planning_units \
-    #         %(data_dir)s/planning_units.shp \
-    #         %(data_dir)s/metrics.xls \
-    #         %(data_dir)s/planning_units.shp' % vars)
+    - name: install data
+      when: newdata is defined and newdata
+      notify: 
+        - restart supervisor
+        - restart celery
+        - restart nginx
+        - restart uwsgi
+      sudo_user: "{{ remote_user }}"
+      command: "{{ manage }} import_planning_units {{ project_path }}/data/planning_units_simple.shp {{ project_path }}/data/metrics.xls {{ project_path }}/data/planning_units.shp"
 
     # handler to restart services (common include to provision.yml)
     - name: supervisor
@@ -230,6 +248,18 @@
 
     - name: uwsgi
       action: service name=uwsgi state=started  # started doesn't do the trick with multiple uwsgi apps?
+
+    # - name: restart
+    #   tags:
+    #     - restart
+    #     - deploy
+    #   debug: msg="Restarting services..."  # dummy
+    #   changed_when: True
+    #   notify: 
+    #     - restart supervisor
+    #     - restart celery
+    #     - restart nginx
+    #     - restart uwsgi
 
   handlers: 
     - name: restart supervisor
