@@ -89,6 +89,7 @@
         - 'git+git://github.com/perrygeo/TileStache.git@master#egg=TileStache'
 
     - name: git checkout
+      sudo_user: '{{ remote_user }}'
       when: manage_with_git
       git: repo=https://github.com/Ecotrust/cogs-priorities.git
            dest={{ project_path }}
@@ -199,6 +200,25 @@
     - name: enable uwsgi app for tilestache
       file: src=/etc/uwsgi/apps-available/tilestache-{{ app_name }}.ini dest=/etc/uwsgi/apps-enabled/tilestache-{{ app_name }}.ini owner=root group={{ remote_user }} state=link
 
+
+    # COPY data
+    # depends on the "newdata" variable being defined at the command line
+    #    .... -extra-vars "newdata=true"
+    # - name: copy data
+    #   when: newdata is defined
+
+    # Trigger restart handlers if git was updated or we're on vagrantbox
+
+    # handler to install data
+    # INSTALL data
+    # vars['data_dir']  = posixpath.join(vars['app_dir'], '..', 'testdata')
+    # run('cd %(app_dir)s && %(venv)s/bin/python manage.py \
+    #         import_planning_units \
+    #         %(data_dir)s/planning_units.shp \
+    #         %(data_dir)s/metrics.xls \
+    #         %(data_dir)s/planning_units.shp' % vars)
+
+    # handler to restart services (common include to provision.yml)
     - name: supervisor
       action: service name=supervisor state=started
 
