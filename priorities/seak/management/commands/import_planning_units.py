@@ -307,11 +307,10 @@ class Command(BaseCommand):
         cfg = {
             "logging": "warning",
             "cache": {
-                "name": "Multi",
-                "tiers": [
-                    #{ "name": "Memcache", "servers": ["127.0.0.1:11211"] },
-                    { "name": "Disk", "path": "/tmp/%s-stache" % slugify(settings.APP_NAME) }
-                ]
+                "name": "Redis",
+                "host": "localhost",
+                "port": 6379,
+                "db": 1
             },
             "layers": {
                 "planning_units":

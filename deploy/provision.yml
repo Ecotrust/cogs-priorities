@@ -1,6 +1,6 @@
 ---
 - name: initial setup of the priorities tool
-  hosts: dev 
+  hosts: all
   connection: ssh
   remote_user: "{{ remote_user }}"
   sudo: yes
@@ -13,6 +13,8 @@
     webuser: www-data
     debug: 'True'
     domain: 'localhost'
+    manage: "{{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py"
+
 
   tasks:
 
@@ -86,6 +88,12 @@
         - 'git+https://github.com/Ecotrust/madrona.git@master#egg=madrona'
         - 'git+git://github.com/perrygeo/TileStache.git@master#egg=TileStache'
 
+    - name: git checkout
+      when: manage_with_git
+      git: repo=https://github.com/Ecotrust/cogs-priorities.git
+           dest={{ project_path }}
+           version=master
+
     - name: go script
       template: src=templates/go.j2 dest=/home/{{ remote_user }}/go owner={{ remote_user }} group={{ remote_user }} mode=0755
 
@@ -105,6 +113,7 @@
 
     - name: create postgres db
       sudo_user: postgres
+      register: postgres_create_returncode
       postgresql_db: name={{ dbname }}
                      owner={{ dbname }}
                      encoding='UTF-8'
@@ -115,30 +124,43 @@
     - name: load postgis
       sudo_user: postgres
       command: /usr/bin/psql -d {{ dbname }} -f /usr/share/postgresql/9.1/contrib/postgis-1.5/postgis.sql
+      when: postgres_create_returncode['changed']
 
     - name: load spatial_ref_sys
       sudo_user: postgres
       command: /usr/bin/psql -d {{ dbname }} -f /usr/share/postgresql/9.1/contrib/postgis-1.5/spatial_ref_sys.sql
+      when: postgres_create_returncode['changed']
 
     - name: load cleangeometry
       sudo_user: postgres
       command: /usr/bin/psql -d {{ dbname }} -f /tmp/cleangeometry.sql
+      when: postgres_create_returncode['changed']
 
     - name: postgis perms
       sudo_user: postgres
       command: /usr/bin/psql -d {{ dbname }} -f /tmp/fix_perms.sql 
+      when: postgres_create_returncode['changed']
 
     - name: syncdb
-      command: "{{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py syncdb --noinput"
+      command: "{{ manage }} syncdb --noinput"
 
     - name: migrate 
-      command: "{{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py migrate --noinput"
+      command: "{{ manage }} migrate --noinput"
 
     - name: install media
-      command: "{{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py install_media"
+      command: "{{ manage }} install_media"
 
     - name: enable sharing 
-      command: "{{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py enable_sharing --all"
+      command: "{{ manage }} enable_sharing --all"
+      when: postgres_create_returncode['changed']
+
+    - name: install flatblocks
+      command: "{{ manage }} loaddata {{ project_path }}/priorities/fixtures/flatblocks.json"
+      when: postgres_create_returncode['changed']
+
+    - name: install base layers
+      command: "{{ manage }} loaddata {{ project_path }}/priorities/fixtures/project_base_layers.json"
+      when: postgres_create_returncode['changed']
 
     - name: install uwsgi app
       notify: restart uwsgi
@@ -176,6 +198,18 @@
 
     - name: enable uwsgi app for tilestache
       file: src=/etc/uwsgi/apps-available/tilestache-{{ app_name }}.ini dest=/etc/uwsgi/apps-enabled/tilestache-{{ app_name }}.ini owner=root group={{ remote_user }} state=link
+
+    - name: supervisor
+      action: service name=supervisor state=started
+
+    - name: celery
+      action: supervisorctl name=celeryd-{{ app_name }} state=started
+
+    - name: nginx
+      action: service name=nginx state=started
+
+    - name: uwsgi
+      action: service name=uwsgi state=started  # started doesn't do the trick with multiple uwsgi apps?
 
   handlers: 
     - name: restart supervisor
