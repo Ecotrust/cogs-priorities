@@ -18,6 +18,9 @@ Only run a subset of the provisioning tasks. This is implemented as tags; comple
 
 	ansible-playbook provision.yml -i ./hosts -v --limit stage --tags deploy
 	ansible-playbook provision.yml -i ./hosts -v --limit stage --tags restart
-    ansible-playbook provision.yml -i ./hosts -v --limit stage --tags newdata
+
+*A special case*, define when we want to trigger a re-import of the dataset
+
+    ansible-playbook provision.yml -i ./hosts -v --limit stage --tags newdata -extra-vars "newdata=true"
 
 
