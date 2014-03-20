@@ -124,7 +124,7 @@ def get_quantile_breaks(data, nclasses):
     """
     interval = 100.0/nclasses
     pbreaks = [c * interval for c in range(nclasses+1)]
-    quantiles = percentile(data, pbreaks)
+    quantiles = [percentile(data, pb) for pb in pbreaks]
     return quantiles
 
 

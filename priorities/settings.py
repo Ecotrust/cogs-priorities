@@ -55,7 +55,7 @@ STATICMAP_HEIGHT_BUFFER = None
 
 CELERY_IMPORT = ('seak.tasks',)
 
-MARXAN_BIN =  '/usr/local/marxan243/MarOpt_v243_Linux32' # or 64 bit?
+MARXAN_BIN =  '/usr/local/marxan243/MarOpt_v243_Linux64' # or 64 bit?
 MARXAN_OUTDIR =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_output'))
 MARXAN_TEMPLATEDIR = os.path.join(MARXAN_OUTDIR, 'template')
 MARXAN_NUMREPS = 20

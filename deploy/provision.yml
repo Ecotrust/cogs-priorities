@@ -229,7 +229,7 @@
     # depends on the "newdata" variable being defined at the command line
     #    .... -extra-vars "newdata=true"
     - name: copy data
-      when: (manage_with_git | bool and newdata | bool)
+      when: (manage_with_git | bool and newdata is defined and newdata | bool)
       #sudo_user: "{{ remote_user }}"
       copy: src=../data dest={{ project_path }}
 
@@ -245,10 +245,14 @@
       command: "{{ manage }} import_planning_units {{ project_path }}/data/planning_units_simple.shp {{ project_path }}/data/metrics.xls {{ project_path }}/data/planning_units_full.shp"
 
     - name: clear redis cache
+      tags:
+        - restart
       when: newdata is defined and newdata
       command: "redis-cli FLUSHDB"
 
     - name: clear django cache
+      tags:
+        - restart
       when: newdata is defined and newdata
       command: "{{manage}} clear_cache"
 
@@ -265,17 +269,16 @@
     # - name: uwsgi
     #   action: service name=uwsgi state=started  # started doesn't do the trick with multiple uwsgi apps?
 
-    # - name: restart
-    #   tags:
-    #     - restart
-    #     - deploy
-    #   debug: msg="Restarting services..."  # dummy
-    #   changed_when: True
-    #   notify: 
-    #     - restart supervisor
-    #     - restart celery
-    #     - restart nginx
-    #     - restart uwsgi
+    - name: restart
+      tags:
+        - restart
+        - deploy
+      debug: msg="Restarting services..."  # dummy
+      changed_when: True
+      notify: 
+        - restart supervisor
+        - restart nginx
+        - restart uwsgi
 
   handlers: 
     - name: restart supervisor

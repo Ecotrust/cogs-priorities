@@ -455,8 +455,10 @@ class Command(BaseCommand):
 
         print 
         print "Loading costs, conservation features and auxillary data associated with each planning unit"
-        for feature in layer:
+        numpu = len(layer)
+        for i, feature in enumerate(layer):
             pu = pus.get(fid=feature.get(mapping['fid']))
+            print "Importing planning unit %s (%s of %s)" % (pu, i, numpu)
 
             for aux in auxs:
                 amt = feature.get(aux.dbf_fieldname)
