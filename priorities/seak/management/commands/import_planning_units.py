@@ -533,7 +533,7 @@ class Command(BaseCommand):
         dgs = DefinedGeography.objects.all()
         assert len(dgs) == sheet.nrows - 1
 
-        # Export the puvscf table to csv directly 
+        # Export the puvscf table to csv 
         out = os.path.realpath(os.path.join(settings.MARXAN_TEMPLATEDIR, 'puvcf.dat'))
         print "Exporting the table to %s" % out
         query = """
@@ -541,9 +541,6 @@ class Command(BaseCommand):
             FROM %s_puvscf
             ORDER BY pu
         """ % (app,)
-        # TO '%s'
-        # WITH DELIMITER ','
-        # CSV HEADER
 
         from django.db import connection
         with open(out, 'w') as fh:

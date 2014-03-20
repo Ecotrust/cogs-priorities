@@ -19,18 +19,28 @@
   tasks:
 
     - name: Get aptitude for upgrade
+      tags:
+        - base
       apt: pkg=aptitude state=present
 
     - name: Pycurl dep to run upgrade
+      tags:
+        - base
       apt: pkg=python-pycurl state=present
 
     - name: Safe system upgrade via aptitude
+      tags:
+        - base
       apt: upgrade=safe update_cache=yes cache_valid_time=604800
 
     - name: add Mapnik repo
+      tags:
+        - base
       apt_repository: repo='ppa:mapnik/v2.2.0' state=present update_cache=yes
 
     - name: install base packages
+      tags:
+        - base
       apt: pkg={{ item }} state=present
       with_items:
         - build-essential
@@ -218,9 +228,6 @@
     # COPY datasets
     # depends on the "newdata" variable being defined at the command line
     #    .... -extra-vars "newdata=true"
-    - name: debugit
-      debug: msg={{ manage_with_git }}
-
     - name: copy data
       when: (manage_with_git | bool and newdata | bool)
       #sudo_user: "{{ remote_user }}"
