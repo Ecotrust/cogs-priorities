@@ -26,11 +26,15 @@ def get_mats(dataList, numClass):
 
     return mat1, mat2
 
-def get_jenks_breaks( dataList, numClass ):
+def get_jenks_breaks(dataList, numClass, threshold=800):
     if len(dataList) == 0:
         raise Exception("dataList passed to get_jenks_breaks was empty")
     elif len(dataList) == 1:
         dataList *= 2 # need at least two elements in list
+    elif len(dataList) > threshold:
+        # Jenks scales poorly to large datasets
+        # Use quantiles instead
+        return get_quantile_breaks(dataList, numClass)
 
     dataList.sort()
 
@@ -110,7 +114,22 @@ def getGVF( dataList, numClass ):
         SDCM += preSDCM
     return (SDAM - SDCM)/SDAM
 
+
+from scipy.stats import scoreatpercentile as percentile
+
+def get_quantile_breaks(data, nclasses):
+    """
+    This is just a quick and dirty quantile approach that scales WAY better than the jenks algorithm
+    if n > some threshold (as defined in get_jenks_breaks kwargs), we'll use this instead
+    """
+    interval = 100.0/nclasses
+    pbreaks = [c * interval for c in range(nclasses+1)]
+    quantiles = percentile(data, pbreaks)
+    return quantiles
+
+
 if __name__ == '__main__':
     import random
-    dataset = sorted([float(random.randint(0,100)) for r in xrange(75)])
-    #print get_jenks_breaks(dataset, 4)
+    random.seed(4563)
+    dataset = sorted([float(random.randint(0,100)) for r in xrange(5000)])
+    print get_jenks_breaks(dataset, 4, threshold=1000)
