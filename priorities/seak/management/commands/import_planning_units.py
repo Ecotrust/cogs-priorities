@@ -349,9 +349,7 @@ class Command(BaseCommand):
         for fieldname in numeric_dbf_fieldnames:
             vals = layer.get_fields(fieldname)
             vals = [x for x in vals if x >= 0 ]
-            print "####### starting breaks"
             breaks = sorted(get_jenks_breaks(vals, 4))
-            print "####### done"
             breaks = [0.000001 if x == 0.0 else x for x in breaks]
 
             colors = {
