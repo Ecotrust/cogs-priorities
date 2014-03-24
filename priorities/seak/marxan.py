@@ -138,12 +138,13 @@ VERBOSITY 3
         os.chdir(self.outdir)
         import subprocess
         proc = subprocess.Popen(
-                ['./marxan'], 
+                # ['./marxan'], 
+                [self.marxan_bin], 
                 shell=True, 
                 stdin=subprocess.PIPE, 
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-        ) 
+        )
         print str(proc.communicate()[0])[:800] + "....."
 
     @property 

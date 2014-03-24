@@ -5,7 +5,7 @@ from django.contrib.gis.utils import LayerMapping
 from django.contrib.gis.gdal import DataSource
 from django.template.defaultfilters import slugify
 from django.core.management import call_command
-from seak.jenks import get_jenks_breaks
+from jenks import jenks as get_jenks_breaks
 from madrona.layer_manager.models import Layer, Theme 
 import json
 

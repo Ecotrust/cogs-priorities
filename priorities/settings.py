@@ -55,7 +55,7 @@ STATICMAP_HEIGHT_BUFFER = None
 
 CELERY_IMPORT = ('seak.tasks',)
 
-MARXAN_BIN =  '/usr/local/marxan243/MarOpt_v243_Linux64' # or 64 bit?
+MARXAN_BIN =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_bin','MarOpt_v243_Linux64')) 
 MARXAN_OUTDIR =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_output'))
 MARXAN_TEMPLATEDIR = os.path.join(MARXAN_OUTDIR, 'template')
 MARXAN_NUMREPS = 20
@@ -125,10 +125,10 @@ SHOW_AUX = False # in report
 SHOW_GOAL_MET = True # in report
 
 JS_OPTS = {
-    'start_zoom': 6,  
+    'start_zoom': 4,  
     'num_levels': 8,  
-    'center': {'lon': -118.2, 'lat': 45.5},
-    'extent': [-127.1, 40.0, -106.0, 51.0],
+    'center': {'lon': -96, 'lat': 39},
+    'extent': [-127.1, 25.0, -65.0, 51.0],
     'name_field': 'SUBBASIN',
     'sigfigs': 3,
     'zoom_on_select': False,

@@ -41,9 +41,11 @@
     - name: install base packages
       tags:
         - base
+        - deps
       apt: pkg={{ item }} state=present
       with_items:
         - build-essential
+        - cython
         - csstidy
         - git-core
         - gdal-bin
@@ -82,6 +84,8 @@
       #copy: src=files/foo.conf dest=/etc/file.conf owner=bin group=wheel mode=0644
 
     - name: Install python requirements
+      tags:
+          - deps
       pip: name={{item}} state=present virtualenv={{ venv_path }} virtualenv_site_packages=yes
       with_items:
         - xlrd
@@ -98,6 +102,7 @@
         - uwsgi>=1.2.6
         - 'git+https://github.com/Ecotrust/madrona.git@master#egg=madrona'
         - 'git+git://github.com/perrygeo/TileStache.git@master#egg=TileStache'
+        - 'git+https://github.com/perrygeo/jenks.git#egg=jenks'
 
     - name: git checkout
       when: manage_with_git
@@ -229,12 +234,16 @@
     # depends on the "newdata" variable being defined at the command line
     #    .... -extra-vars "newdata=true"
     - name: copy data
+      tags:
+        - restart
       when: (manage_with_git | bool and newdata is defined and newdata | bool)
       #sudo_user: "{{ remote_user }}"
       copy: src=../data dest={{ project_path }}
 
     # INSTALL data
     - name: install data
+      tags:
+        - restart
       when: newdata is defined and newdata
       notify: 
         - restart supervisor
@@ -248,13 +257,18 @@
       tags:
         - restart
       when: newdata is defined and newdata
-      command: "redis-cli FLUSHDB"
+      command: "redis-cli FLUSHALL"
 
     - name: clear django cache
       tags:
         - restart
       when: newdata is defined and newdata
       command: "{{manage}} clear_cache"
+
+    - name: remove all pyc files
+      tags:
+        - restart
+      command: "find . -name '*.pyc' -exec rm -f {} \;"
 
     # handler to restart services (common include to provision.yml)
     # - name: supervisor

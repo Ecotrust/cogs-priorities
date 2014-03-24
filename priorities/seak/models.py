@@ -20,7 +20,7 @@ from seak.tasks import marxan_start
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils import simplejson as json
 from madrona.common.models import KmlCache
-from seak.jenks import get_jenks_breaks
+from jenks import jenks as get_jenks_breaks
 
 logger = get_logger()
 
