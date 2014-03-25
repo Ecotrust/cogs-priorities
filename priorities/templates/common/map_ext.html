@@ -129,7 +129,7 @@
                                                 </button>
                                             </div>
                                         </div> <!-- end showScenarioList -->
-                                        <div class="span12 well" data-bind="visible: scenarios.selectedFeature" style="margin-left:0;">
+                                        <div class="span12" data-bind="visible: scenarios.selectedFeature" style="margin-left:0;">
                                         <!-- ko with: scenarios -->
                                         <div class="scenario-detail" data-bind="with: selectedFeature">
                                             <div class="row-fluid">
@@ -350,6 +350,7 @@
             line-height: 23px;
             color: #4a4a4a;
             background-color: #f2f2f2;
+            border: 1px solid #ddd;
         }
         .btn.active {
             color: #4a4a4a;
