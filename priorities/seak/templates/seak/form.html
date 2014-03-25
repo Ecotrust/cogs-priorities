@@ -197,18 +197,17 @@
                             {% if slider_mode == 'single' %}
                             <div class="row-fluid">
                                 <!-- SINGLE SLIDER -->
-                                <div class="span1" style="padding-right:13px;">
-                                </div>
                                 <div class="span10" style="vertical-align:middle;">
                                     <span class="text-success slider-label slider-label-left"><small>{% flatblock 'target-low' 3600 %}</small></span>
                                     <span> <div class="slider-range slider-range-single" id="singlerange---{{cf.id_string}}"></div> </span>
                                     <span class="text-success slider-label slider-label-right"><small>{% flatblock 'target-high' 3600 %}</small></span>
                                 </div>
-                                <div class="span1">
+                                <div class="span2">
+
                                     <div class="row-fluid">
                                         <div class="span10">
                                             <input type="text" class="debug-only penaltyvalue" id="penalty---{{cf.id_string}}" value="0.0"/>
-                                            <input type="text" class="{% if not slider_show_proportion %}debug-only {% endif %}input-mini targetvalue" 
+                                            <input type="text" class="{% if not slider_show_proportion %}debug-only {% endif %}input-micro targetvalue" 
                                                 id="target---{{cf.id_string}}" value="0.0"/>
                                         </div>
                                         <div class="span2">
