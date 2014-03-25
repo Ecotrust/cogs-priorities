@@ -234,16 +234,12 @@
     # depends on the "newdata" variable being defined at the command line
     #    .... -extra-vars "newdata=true"
     - name: copy data
-      tags:
-        - restart
       when: (manage_with_git | bool and newdata is defined and newdata | bool)
       #sudo_user: "{{ remote_user }}"
       copy: src=../data dest={{ project_path }}
 
     # INSTALL data
     - name: install data
-      tags:
-        - restart
       when: newdata is defined and newdata
       notify: 
         - restart supervisor
@@ -268,20 +264,8 @@
     - name: remove all pyc files
       tags:
         - restart
-      command: "find . -name '*.pyc' -exec rm -f {} \;"
-
-    # handler to restart services (common include to provision.yml)
-    # - name: supervisor
-    #   action: service name=supervisor state=started
-
-    # - name: celery
-    #   action: supervisorctl name=celeryd-{{ app_name }} state=started
-
-    # - name: nginx
-    #   action: service name=nginx state=started
-
-    # - name: uwsgi
-    #   action: service name=uwsgi state=started  # started doesn't do the trick with multiple uwsgi apps?
+      command: >
+        find . -name '*.pyc' -exec rm -f {} \;
 
     - name: restart
       tags:
@@ -297,9 +281,6 @@
   handlers: 
     - name: restart supervisor
       action: service name=supervisor state=restarted
-
-    # - name: restart celery
-    #   action: supervisorctl name=celeryd-{{ app_name }} state=restarted
 
     - name: restart nginx
       action: service name=nginx state=reloaded
