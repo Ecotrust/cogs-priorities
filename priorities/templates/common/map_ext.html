@@ -341,7 +341,23 @@
     <script src="/media/layer_manager/js/models.js"></script>
     <script src="/media/layer_manager/js/load.js"></script>
     <script src="/media/layer_manager/js/knockout-bindings.js"></script>
-
+    
+    <style> 
+        a { color: #2a2c4c;}
+        a:hover { color: #2a2c4c;}
+        .nav-tabs>.active>a {color: #2a2c4c;}
+        .btn {
+            line-height: 23px;
+            color: #4a4a4a;
+            background-color: #f2f2f2;
+        }
+        .btn.active {
+            color: #4a4a4a;
+        }
+        #opacity-popover {
+            width: 220px;
+        }
+    </style>
     <script>
         handleWorkspace = function (data) {
             app.workspace = data;

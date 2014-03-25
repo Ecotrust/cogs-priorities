@@ -125,11 +125,11 @@ SHOW_AUX = False # in report
 SHOW_GOAL_MET = True # in report
 
 JS_OPTS = {
-    'start_zoom': 4,  
+    'start_zoom': 3,  
     'num_levels': 8,  
     'center': {'lon': -96, 'lat': 39},
     'extent': [-127.1, 25.0, -65.0, 51.0],
-    'name_field': 'SUBBASIN',
+    'name_field': 'NAME',
     'sigfigs': 3,
     'zoom_on_select': False,
 }

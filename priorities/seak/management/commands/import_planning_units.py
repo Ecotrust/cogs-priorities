@@ -285,12 +285,26 @@ class Command(BaseCommand):
         <StyleName>pu-outline</StyleName>
         <StyleName>pu</StyleName>
         <Datasource>
+            <!--
             <Parameter name="type">shape</Parameter>
             <Parameter name="file">%(shppath)s</Parameter>
+            -->
+            <Parameter name="type">ogr</Parameter>
+            <Parameter name="base">%(shpdir)s</Parameter>
+            <Parameter name="file">%(shpfile)s</Parameter>
+            <Parameter name="layer">%(shplyr)s</Parameter>
         </Datasource>
+
     </Layer>
 </Map>""" 
-        xml = xml_template % {'shppath': os.path.abspath(fullres_shp), 'extra_rules': ''}
+
+        xml = xml_template % {
+            'shppath': os.path.abspath(fullres_shp),
+            'shpdir': os.path.dirname(os.path.abspath(fullres_shp)),
+            'shpfile': os.path.basename(os.path.abspath(fullres_shp)),
+            'shplyr': os.path.splitext(os.path.basename(os.path.abspath(fullres_shp)))[0],
+            'extra_rules': ''
+        } 
 
         if not os.path.exists(settings.TILE_CONFIG_DIR):
             os.makedirs(settings.TILE_CONFIG_DIR)
@@ -302,14 +316,11 @@ class Command(BaseCommand):
         # Get all dbf fieldnames for the utfgrids
         all_dbf_fieldnames = [cf.dbf_fieldname for cf in cfs_with_fields]
         all_dbf_fieldnames.extend([c.dbf_fieldname for c in cs])
+        all_dbf_fieldnames.extend([aux.dbf_fieldname for aux in auxs])
         all_dbf_fieldnames.append(params['name_field'])
 
         cfg = {
-            "logging": "debug",
-            # "cache": {
-            #     "name": "Test",
-            #     "verbose": True
-            # },
+            "logging": "warning",
             "cache": {
                 "name": "Redis",
                 "host": "localhost",
@@ -352,12 +363,19 @@ class Command(BaseCommand):
             breaks = sorted(get_jenks_breaks(vals, 4))
             breaks = [0.000001 if x == 0.0 else x for x in breaks]
 
+            # colors = {
+            #     'c1': '#CC4C02', # high 
+            #     'c2': '#FE9929', 
+            #     'c3': '#FED98E', 
+            #     'c4': '#FFFFD4', # low
+            #     'c5': '#FFFFFF', # zero
+            # }
             colors = {
-                'c1': '#CC4C02', # high 
-                'c2': '#FE9929', 
-                'c3': '#FED98E', 
-                'c4': '#FFFFD4', # low
-                'c5': '#FFFFFF', # zero
+                'c1': '#006d2c', # high 
+                'c2': '#2ca25f', 
+                'c3': '#66c2a4', 
+                'c4': '#b2e2e2', # low
+                'c5': '#edf8fb', # zero
             }
 
             tdict = {"fieldname": fieldname, 'b1': breaks[1], 'b2': breaks[2], 'b3': breaks[3]}
@@ -386,7 +404,13 @@ class Command(BaseCommand):
                 </Rule>
             """ % tdict 
 
-            xml = xml_template % {'shppath': os.path.abspath(fullres_shp), 'extra_rules': extra_rules} 
+            xml = xml_template % {
+                'shppath': os.path.abspath(fullres_shp),
+                'shpdir': os.path.dirname(os.path.abspath(fullres_shp)),
+                'shpfile': os.path.basename(os.path.abspath(fullres_shp)),
+                'shplyr': os.path.splitext(os.path.basename(os.path.abspath(fullres_shp)))[0],
+                'extra_rules': extra_rules
+            } 
             with open(os.path.join(settings.TILE_CONFIG_DIR, fieldname + '.xml'), 'w') as fh:
                 print "  writing %s.xml" % fieldname
                 fh.write(xml)
@@ -456,6 +480,10 @@ class Command(BaseCommand):
         print 
         print "Loading costs, conservation features and auxillary data associated with each planning unit"
         numpu = len(layer)
+        puvsaux_batch = []
+        puvscf_batch = []
+        puvscost_batch = []
+
         for i, feature in enumerate(layer):
             pu = pus.get(fid=feature.get(mapping['fid']))
             print "Importing planning unit %s (%s of %s)" % (pu, i, numpu)
@@ -464,8 +492,7 @@ class Command(BaseCommand):
                 amt = feature.get(aux.dbf_fieldname)
                 if amt == NULL_VALUE:
                     amt = None
-                obj = PuVsAux(pu=pu, aux=aux, value=amt)
-                obj.save()
+                puvsaux_batch.append(PuVsAux(pu=pu, aux=aux, value=amt))
 
             for cf in cfs_with_fields:
                 amt = feature.get(cf.dbf_fieldname)
@@ -474,8 +501,7 @@ class Command(BaseCommand):
                 elif amt < 0:
                     print "WARNING:", cf.dbf_fieldname, "has negative values"
                     amt = 0  # no non-null negatives
-                obj = PuVsCf(pu=pu, cf=cf, amount=amt)
-                obj.save()
+                puvscf_batch.append(PuVsCf(pu=pu, cf=cf, amount=amt))
 
             for c in cs: 
                 amt = feature.get(c.dbf_fieldname)
@@ -484,8 +510,11 @@ class Command(BaseCommand):
                 elif amt < 0:
                     print "WARNING:", c.dbf_fieldname, "has negative values"
                     amt = 0  # no non-null negatives
-                obj = PuVsCost(pu=pu, cost=c, amount=amt)
-                obj.save()
+                puvscost_batch.append(PuVsCost(pu=pu, cost=c, amount=amt))
+
+        PuVsAux.objects.bulk_create(puvsaux_batch)
+        PuVsCf.objects.bulk_create(puvscf_batch)
+        PuVsCost.objects.bulk_create(puvscost_batch)
 
         assert len(PuVsCf.objects.all()) == len(pus) * len(cfs_with_fields)
         assert len(PuVsCost.objects.all()) == len(pus) * len(cs)
