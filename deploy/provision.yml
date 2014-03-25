@@ -18,6 +18,9 @@
 
   tasks:
 
+    - name: got into maintenance mode 
+      command: "touch /tmp/.maintenance_mode"
+
     - name: Get aptitude for upgrade
       tags:
         - base
@@ -174,7 +177,7 @@
     - name: install media
       tags:
         - deploy
-      command: "{{ manage }} install_media"
+      command: "{{ manage }} install_media -a"
 
     - name: site
       tags:
@@ -256,6 +259,8 @@
       command: "redis-cli FLUSHALL"
 
     - name: clear django cache
+      notify:
+        - precache
       tags:
         - restart
       when: newdata is defined and newdata
@@ -277,6 +282,7 @@
         - restart supervisor
         - restart nginx
         - restart uwsgi
+        - remove maintenance mode
 
   handlers: 
     - name: restart supervisor
@@ -287,3 +293,9 @@
 
     - name: restart uwsgi
       action: service name=uwsgi state=restarted
+
+    - name: precache
+      command: "{{ manage }} precache"
+
+    - name: remove maintenance mode 
+      command: "rm /tmp/.maintenance_mode"
