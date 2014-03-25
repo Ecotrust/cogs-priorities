@@ -668,13 +668,13 @@ class Scenario(Analysis):
     def status(self):
         url = self.get_absolute_url()
         if process_is_running(url):
-            status = """Analysis is currently running.""" % (self.name,)
+            status = """Analysis is currently running."""
             code = 2
         elif process_is_complete(url):
-            status = "Analysis completed; compiling results..." % self.name
+            status = "Analysis completed; compiling results..."
             code = 3
         elif process_is_pending(url):
-            status = "Analysis is in the queue but not yet running." % self.name
+            status = "Analysis is in the queue but not yet running."
             res = get_process_result(url)
             code = 1
             if res is not None:
