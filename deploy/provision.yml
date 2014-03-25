@@ -249,7 +249,6 @@
         # - restart celery
         - restart nginx
         - restart uwsgi
-      sudo_user: "{{ remote_user }}"
       command: "{{ manage }} import_planning_units {{ project_path }}/data/planning_units_simple.shp {{ project_path }}/data/metrics.xls {{ project_path }}/data/planning_units_full.shp"
 
     - name: clear redis cache

@@ -1,14 +1,5 @@
 [
   {
-    "pk": 19,
-    "model": "flatblocks.flatblock",
-    "fields": {
-      "content": "For each conservation objective, the chart below shows how much of the total potentially available value is represented by this solution. (<em>Species in italics were not explicitly targeted but may exist in the same subbasin as our target species</em>)",
-      "header": "",
-      "slug": "show-targets-explanation"
-    }
-  },
-  {
     "pk": 6,
     "model": "flatblocks.flatblock",
     "fields": {
@@ -42,24 +33,6 @@
       "content": "The objective function score attempts to quantify the effectiveness of this scenario with regards to surrogate species. <br>\r\n\r\n<ul>\r\n <li> Targeted species: +2 penalty </li>\r\n <li> Missed species: +2 penalty </li>\r\n <li> Under-represented species: +0 to +1 penalty (depending on how far off target)</li>\r\n <li> Adequately represented species: NO penalty </li>\r\n</ul>\r\n\r\nThe ultimate goal would be to adequately represent the highest number of species without explicitly targeting their habitat.",
       "header": "",
       "slug": "surrogate-objective-description"
-    }
-  },
-  {
-    "pk": 16,
-    "model": "flatblocks.flatblock",
-    "fields": {
-      "content": "watersheds",
-      "header": "",
-      "slug": "planning-units"
-    }
-  },
-  {
-    "pk": 17,
-    "model": "flatblocks.flatblock",
-    "fields": {
-      "content": "Select the watersheds that define your geographic region of interest.",
-      "header": "",
-      "slug": "form-geography-header"
     }
   },
   {
@@ -159,15 +132,6 @@
       "content": "<h3>Scenario should be rerun</h3> New data has been loaded into the prioritization tool since this scenario was created. It is <em>highly</em> recommended that you Edit and rerun the scenario to make sure the results are still valid with the current data.",
       "header": "",
       "slug": "scenario-expired-message"
-    }
-  },
-  {
-    "pk": 14,
-    "model": "flatblocks.flatblock",
-    "fields": {
-      "content": "In addition to focal species, prioritize watersheds based the following factors.",
-      "header": "",
-      "slug": "form-costs-header"
     }
   },
   {
@@ -351,24 +315,6 @@
     }
   },
   {
-    "pk": 11,
-    "model": "flatblocks.flatblock",
-    "fields": {
-      "content": "Watersheds",
-      "header": "",
-      "slug": "show-planning-units"
-    }
-  },
-  {
-    "pk": 42,
-    "model": "flatblocks.flatblock",
-    "fields": {
-      "content": "Or, if you need to fine-tune the geography, you can use the map draw a box around additional watersheds. To navigate, use the keyboard controls (+/- to zoom, arrow keys to pan). If you need to undo the selection, click on the map away from the study region.",
-      "header": "",
-      "slug": "geography-fine-tune"
-    }
-  },
-  {
     "pk": 43,
     "model": "flatblocks.flatblock",
     "fields": {
@@ -387,39 +333,12 @@
     }
   },
   {
-    "pk": 45,
-    "model": "flatblocks.flatblock",
-    "fields": {
-      "content": "Watersheds",
-      "header": "",
-      "slug": "show-planning-units-tab"
-    }
-  },
-  {
     "pk": 10,
     "model": "flatblocks.flatblock",
     "fields": {
       "content": "Focal Species",
       "header": "",
       "slug": "show-conservation-features"
-    }
-  },
-  {
-    "pk": 1,
-    "model": "flatblocks.flatblock",
-    "fields": {
-      "content": "Regional Aquatic Prioritization and Mapping Tool",
-      "header": "",
-      "slug": "title"
-    }
-  },
-  {
-    "pk": 46,
-    "model": "flatblocks.flatblock",
-    "fields": {
-      "content": "Constraints for each watershed are listed in the table below; <em>High</em> indicates greater constraints or greater cost associated with that watershed.  ",
-      "header": "",
-      "slug": "show-explain-constraints"
     }
   },
   {
@@ -438,6 +357,87 @@
       "content": "<p>Conserving landscape-scale habitats on a species-by-species basis is impractical. Instead we can target conservation of a select group of \"surrogate species\" while still supporting habitat for a wide range of species.\r\n</p>\r\n<p>\r\n<em>Note: surrogate species metrics are calculated relative to the entire region regardless of the geography selected.</em>\r\n</p>",
       "header": "",
       "slug": "surrogate-species-description"
+    }
+  },
+  {
+    "pk": 1,
+    "model": "flatblocks.flatblock",
+    "fields": {
+      "content": "National Refuge System Priorities Tool",
+      "header": "",
+      "slug": "title"
+    }
+  },
+  {
+    "pk": 16,
+    "model": "flatblocks.flatblock",
+    "fields": {
+      "content": "planning units",
+      "header": "",
+      "slug": "planning-units"
+    }
+  },
+  {
+    "pk": 11,
+    "model": "flatblocks.flatblock",
+    "fields": {
+      "content": "Planning Units",
+      "header": "",
+      "slug": "show-planning-units"
+    }
+  },
+  {
+    "pk": 45,
+    "model": "flatblocks.flatblock",
+    "fields": {
+      "content": "Planning Units",
+      "header": "",
+      "slug": "show-planning-units-tab"
+    }
+  },
+  {
+    "pk": 17,
+    "model": "flatblocks.flatblock",
+    "fields": {
+      "content": "Select the planning units that define your geographic region of interest.",
+      "header": "",
+      "slug": "form-geography-header"
+    }
+  },
+  {
+    "pk": 14,
+    "model": "flatblocks.flatblock",
+    "fields": {
+      "content": "In addition to focal species, prioritize planning units constrained by the following factors.",
+      "header": "",
+      "slug": "form-costs-header"
+    }
+  },
+  {
+    "pk": 42,
+    "model": "flatblocks.flatblock",
+    "fields": {
+      "content": "Or, if you need to fine-tune the geography, you can use the map draw a box around additional planning units. To navigate, use the keyboard controls (+/- to zoom, arrow keys to pan). If you need to undo the selection, click on the map away from the study region.",
+      "header": "",
+      "slug": "geography-fine-tune"
+    }
+  },
+  {
+    "pk": 46,
+    "model": "flatblocks.flatblock",
+    "fields": {
+      "content": "Constraints for each planning unit are listed in the table below; <em>High</em> indicates greater constraints or greater cost associated with that watershed.  ",
+      "header": "",
+      "slug": "show-explain-constraints"
+    }
+  },
+  {
+    "pk": 19,
+    "model": "flatblocks.flatblock",
+    "fields": {
+      "content": "For each conservation objective, the chart below shows how much of the total potentially available habitat value is represented by this solution. ",
+      "header": "",
+      "slug": "show-targets-explanation"
     }
   }
 ]
