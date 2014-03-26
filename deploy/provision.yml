@@ -19,6 +19,8 @@
   tasks:
 
     - name: got into maintenance mode 
+      notify:
+        - turn off maintenance mode
       command: "touch /tmp/.maintenance_mode"
 
     - name: Get aptitude for upgrade
@@ -216,6 +218,9 @@
     - name: stupid uwsgi hack
       file: path=/usr/lib/uwsgi/plugins state=directory
 
+    - name: marxan_output writable by remote_user (celery)
+      file: path={{ project_path }}/marxan_output owner={{ remote_user }} state=directory mode=755
+
     - name: template dir writable
       file: path={{ project_path }}/marxan_output/template owner={{ remote_user }} state=directory mode=755
 
@@ -252,42 +257,39 @@
       command: "{{ manage }} import_planning_units {{ project_path }}/data/planning_units_simple.shp {{ project_path }}/data/metrics.xls {{ project_path }}/data/planning_units_full.shp"
 
     - name: clear redis cache
-      tags:
-        - restart
       when: newdata is defined and newdata
       command: "redis-cli FLUSHALL"
 
     - name: clear django cache
       notify:
         - precache
-      tags:
-        - restart
       when: newdata is defined and newdata
       command: "{{manage}} clear_cache"
 
     - name: remove all pyc files
-      tags:
-        - restart
       command: >
         find . -name '*.pyc' -exec rm -f {} \;
 
     - name: restart
       tags:
-        - restart
         - deploy
       debug: msg="Restarting services..."  # dummy
       changed_when: True
       notify: 
-        - restart supervisor
-        - restart nginx
+        - restart celery
+        - reload nginx
         - restart uwsgi
         - remove maintenance mode
 
-  handlers: 
-    - name: restart supervisor
-      action: service name=supervisor state=restarted
+    - name: make sure supervisor is started
+      action: service name=supervisor state=started 
 
-    - name: restart nginx
+  handlers: 
+
+    - name: restart celery 
+      supervisorctl: name=celeryd-{{ app_name }} state=restarted
+
+    - name: reload nginx
       action: service name=nginx state=reloaded
 
     - name: restart uwsgi
@@ -296,5 +298,5 @@
     - name: precache
       command: "{{ manage }} precache"
 
-    - name: remove maintenance mode 
+    - name: turn off maintenance mode
       command: "rm /tmp/.maintenance_mode"
