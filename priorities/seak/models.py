@@ -535,30 +535,33 @@ class Scenario(Analysis):
 
         bestjson = json.loads(self.output_best)
         bestpks = [int(x) for x in bestjson['best']]
-        bestpus = PlanningUnit.objects.filter(pk__in=bestpks).order_by('name')
+        bestpus = PlanningUnit.objects.select_related().filter(pk__in=bestpks).order_by('name')
         potentialpus = PlanningUnit.objects.filter(fid__in=geography)
         bbox = None
         if bestpus:
             bbox = potentialpus.extent()
         best = []
         logger.debug("looping through bestpus queryset")
+
         
         scaled_costs = {}
         all_costs = Cost.objects.all()
         scaled_breaks = {}
-
-        for costslug, weight in cost_weights.iteritems():
+        for costslug, weight in cost_weights.items():
             if weight <= 0:
                 continue
             try:
                 cost = [x for x in all_costs if x.slug == costslug][0] 
             except IndexError:
                 continue
-            all_selected = PuVsCost.objects.filter(cost=cost, pu__in=bestpus)
-            all_potential = PuVsCost.objects.filter(cost=cost, pu__in=potentialpus)
+
+            all_selected = PuVsCost.objects.select_related().filter(cost=cost, pu__in=bestpus)
+            all_potential = PuVsCost.objects.select_related().filter(cost=cost, pu__in=potentialpus)
+
             vals = [x.amount for x in all_potential]
             fids = [x.pu.fid for x in all_potential]
             fids_selected = [x.pu.fid for x in all_selected]
+
             scaled_values = [int(x) for x in scale_list(vals, floor=0.0)]
             pucosts_potential = dict(zip(fids, scaled_values))
             extract = lambda x, y: dict(zip(x, map(y.get, x)))
@@ -568,6 +571,7 @@ class Scenario(Analysis):
 
         sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid') if x.slug in scaled_costs.keys()]
         
+        # TODO: Optimize this loop, can take several seconds
         summed_costs = {}
         for pu in bestpus:
             centroid = pu.centroid 
@@ -605,6 +609,7 @@ class Scenario(Analysis):
         sum_area = sum([x.area for x in bestpus])
 
         # Parse mvbest
+        # TODO: Optimize this loop, can take several seconds
         fh = open(os.path.join(self.outdir, "output", "seak_mvbest.csv"), 'r')
         lines = [x.strip().split(',') for x in fh.readlines()[1:]]
         fh.close()
