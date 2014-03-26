@@ -272,6 +272,7 @@
 
     - name: restart
       tags:
+        - restart 
         - deploy
       debug: msg="Restarting services..."  # dummy
       changed_when: True
@@ -279,9 +280,10 @@
         - restart celery
         - reload nginx
         - restart uwsgi
-        - remove maintenance mode
 
     - name: make sure supervisor is started
+      tags:
+        - restart
       action: service name=supervisor state=started 
 
   handlers: 
