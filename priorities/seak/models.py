@@ -21,6 +21,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.utils import simplejson as json
 from madrona.common.models import KmlCache
 from jenks import jenks as get_jenks_breaks
+from collections import defaultdict
 
 logger = get_logger()
 
@@ -383,9 +384,17 @@ class Scenario(Analysis):
         # Apply the target and penalties
         logger.debug("Apply the targets and penalties")
         cfs = []
-        pus = PlanningUnit.objects.filter(fid__in=geography_fids)
-        for cf in ConservationFeature.objects.all():
-            total = sum([x.amount for x in cf.puvscf_set.filter(pu__in=pus) if x.amount])
+
+        if settings.VARIABLE_GEOGRAPHY:
+            pus = PlanningUnit.objects.select_related().filter(fid__in=geography_fids).order_by('fid')
+        else:
+            puqs = PlanningUnit.objects.select_related().all().order_by('fid')
+
+        for cf in ConservationFeature.objects.select_related().all():
+            if settings.VARIABLE_GEOGRAPHY:
+                total = sum([x.amount for x in cf.puvscf_set.filter(pu__in=puqs) if x.amount])
+            else:
+                total = sum([x.amount for x in cf.puvscf_set.all() if x.amount])
             target_prop = targets[cf.pk]
             # only take 99.9% at most to avoid rounding errors 
             # which lead Marxan to believe that the target is unreachable
@@ -404,16 +413,21 @@ class Scenario(Analysis):
             except KeyError:
                 final_cost_weights[costkey] = 0
 
-        raw_costs = {}
-        pus = []
-        for pu in PlanningUnit.objects.filter(fid__in=geography_fids):
-            puc = PuVsCost.objects.filter(pu=pu)
-            for c in puc:
-                costkey = c.cost.slug
-                if costkey not in raw_costs.keys():
-                    raw_costs[costkey] = []
-                raw_costs[costkey].append(c.amount)
-            pus.append(pu.pk)
+        raw_costs = defaultdict(list)
+
+        for cost in Cost.objects.all():
+            costkey = cost.slug
+            if settings.VARIABLE_GEOGRAPHY:
+                puvscosts = PuVsCost.objects.filter(cost=cost, pu__in=puqs).order_by('pu')
+            else:
+                puvscosts = PuVsCost.objects.filter(cost=cost).order_by('pu')
+            raw_costs[costkey] = [x.amount for x in puvscosts]
+
+        pus = [pu.fid for pu in puqs] # assume this ordering matches the costs
+
+        # make sure the lists are aligned
+        for k, v in raw_costs.items():
+            assert len(pus) == len(v)
 
         # scale, weight and combine costs
         weighted_costs = {}
