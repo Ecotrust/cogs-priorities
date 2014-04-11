@@ -4,11 +4,14 @@ geo $maintenance_ip {
 }
 
 server {
+
+    listen 80;
+
     client_max_body_size 20M;
 
     # A special wildcard name in the form .example.org can be used to match
     # both the exact name example.org and the wildcard name *.example.org
-    # server_name .sdfsfsdf; # TODO {{ domain }}
+    server_name {{ domain }};
     
     access_log /var/log/nginx/{{ app_name }}.access.log;
     error_log /var/log/nginx/{{ app_name }}.error.log;

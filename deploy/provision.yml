@@ -11,8 +11,6 @@
     project_path: '/usr/local/apps/cogs-priorities'
     dbname: 'cogs'
     webuser: www-data
-    debug: 'True'
-    domain: 'localhost'
     manage: "{{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py"
 
 
@@ -291,11 +289,11 @@
     - name: restart celery 
       supervisorctl: name=celeryd-{{ app_name }} state=restarted
 
-    - name: reload nginx
-      action: service name=nginx state=reloaded
-
     - name: restart uwsgi
       action: service name=uwsgi state=restarted
+
+    - name: reload nginx
+      action: service name=nginx state=reloaded
 
     - name: precache
       command: "{{ manage }} precache"
