@@ -24,6 +24,6 @@ Just **restart services**
 
 When we want to trigger a **re-import of the dataset**
 
-    ansible-playbook provision.yml -i ./hosts -v --tags restart -e "newdata=true" --limit <host>
+    ansible-playbook provision.yml -i ./hosts -v -e "newdata=true" --limit <host>
 
 
