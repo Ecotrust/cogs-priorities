@@ -29,4 +29,4 @@ gallus
 remote_user=mperry
 manage_with_git=true
 debug=False
-domain=gallus.ecotrust.org
+domain=cogs.priorities.ecotrust.org
