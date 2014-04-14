@@ -75,7 +75,7 @@ function init_map() {
         ],
         minZoomLevel: js_opts.start_zoom,
         restrictedExtent: extent,
-        numZoomLevels: js_opts.num_levels 
+        numZoomLevels: js_opts.num_levels
     });
 
     markers = new OpenLayers.Layer.Markers( "Markers", {displayInLayerSwitcher: false});
@@ -291,7 +291,7 @@ function init_map() {
 
     var pt = new OpenLayers.LonLat(js_opts.center.lon, js_opts.center.lat);
     pt.transform(latlon, merc);
-    map.setCenter(pt, js_opts.start_zoom);
+    map.setCenter(pt, js_opts.start_zoom + 1);
 }
 
 // dataTables plugin to sort number OR string by hidden title attribute

@@ -102,5 +102,48 @@
       "legend_title": null, 
       "sublayers": []
     }
+  }, 
+  {
+    "pk": 3, 
+    "model": "layer_manager.layer", 
+    "fields": {
+      "layer_type": "XYZ", 
+      "fact_sheet": null, 
+      "themes": [
+        1
+      ], 
+      "compress_display": false, 
+      "map_tiles": null, 
+      "legend_subtitle": null, 
+      "bookmark": null, 
+      "vector_graphic": null, 
+      "kml": null, 
+      "source": null, 
+      "lookup_table": [], 
+      "utfurl": null, 
+      "thumbnail": null, 
+      "data_download": null, 
+      "metadata": null, 
+      "opacity": 1.0, 
+      "vector_color": null, 
+      "attribute_event": "click", 
+      "description": null, 
+      "attribute_fields": [], 
+      "learn_more": null, 
+      "data_overview": null, 
+      "attribute_title": null, 
+      "is_sublayer": false, 
+      "lookup_field": null, 
+      "legend": null, 
+      "data_status": null, 
+      "vector_fill": null, 
+      "data_source": "US FWS",
+      "data_notes": null, 
+      "name": "FWS Refuge Boundaries", 
+      "url": "http://gis.fws.gov/arcgis/rest/services/FWS_Refuge_Boundaries_ServCat_Approved/MapServer/tile/${z}/${y}/${x}",
+      "arcgis_layers": null, 
+      "legend_title": null, 
+      "sublayers": []
+    }
   } 
 ]
