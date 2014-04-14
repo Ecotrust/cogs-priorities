@@ -166,21 +166,31 @@
             <div class="accordion-group accordion-group-objective">
                 <div class="accordion-heading">
                     <div class="row-fluid">
-                        <div class="span4" style="text-align:left;">
+                        <div class="span3" style="text-align:left;">
                             <a class="accordion-toggle" data-toggle="collapse" 
                             href="#collapse-{{category.grouper|slugify}}"> <i class="category-icon icon-minus"></i> {{category.grouper}} </a>
                         </div>
-                        <div class="span8" style="padding:12px;">
+                        <div class="span9" style="padding:4px;">
                             <div class="slider-collapse aggregate hide" id="#slider-collapse-{{category.grouper|slugify}}">
-                                <span class="text-success slider-label slider-label-left"><small>{% flatblock 'target-low' 3600 %}</small></span>
-                                <div class="slider-range slider-range-single" id="singlerange---CATEGORY-{{category.grouper|slugify}}" style="width:35%"></div> 
-                                <span class="text-success slider-label slider-label-right"><small>{% flatblock 'target-high' 3600 %}</small></span>
+                                <span class="text-success slider-label slider-label-left">
+                                    <small>{% flatblock 'target-low' 3600 %}</small>
+                                </span>
+
+                                <div class="slider-range slider-range-single" 
+                                     id="singlerange---CATEGORY-{{category.grouper|slugify}}" style="width:25%"></div> 
+
+                                <span class="text-success slider-label slider-label-right">
+                                    <small>{% flatblock 'target-high' 3600 %}</small>
+                                </span>
+
+                                <span>
+                                    <input type="text" class="targetvalue input-micro" 
+                                        id="target---CATEGORY-{{category.grouper|slugify}}" value="0.0"/>
+                                </span>
+
                                 <a class="btn btn-mini apply"><small>Apply to all {{category.grouper}}</small></a>
+
                             </div>
-                        </div>
-                        <div class="debug-only">
-                            <input type="text" class="targetvalue input-micro" 
-                                id="target---CATEGORY-{{category.grouper|slugify}}" value="0.0"/>
                         </div>
                         <div class="debug-only">
                             <input type="text" class="penaltyvalue input-micro" 
@@ -296,6 +306,13 @@
                     sliderTarget.slider( "option", "value", $(this).val() );
                 }
             });
+
+            $('.categoryvalue').change( function(e) { 
+                sliderTargetId = $(this).attr('id').replace("categorytarget",'') 
+                sliderTarget = $("#" + sliderTargetId)
+                sliderTarget.slider( "option", "value", $(this).val() );
+            });
+
             // Make category slider work
             $('a.apply').click(function(e) {
                 e.preventDefault();
@@ -336,8 +353,12 @@
           <table class="table table-condensed">
             {% for cost in costs %}
             <tr class="cost-row" id="row-{{cost.dbf_fieldname}}">
-                <td><input type="checkbox" class="costvalue" id="cost---{{cost.slug}}" checked="1"/></td>
-                <td><label for="cost---{{cost.slug}}">{{cost.name}} <!-- {% if cost.desc %}(<em>{{cost.desc}}</em>){% endif %} --></label></td>
+                <td><input type="checkbox" class="costvalue" id="cost---{{cost.slug}}"/></td>
+                <td>
+                    <label for="cost---{{cost.slug}}">{{cost.name}}
+                    {% if cost.desc %}<p class="text-info"><small>{{cost.desc}}</small></p>{% endif %}
+                    </label>
+                </td>
             </tr>
             {% endfor %}
           </table>
@@ -346,6 +367,12 @@
             <p class="debug-only" style="margin-top: 12px; font-size: 75%">{% flatblock 'form-geography-note' 3600 %}</p>
         </div>
     </div>
+    <script>
+        $("input.costvalue").click( function(e) {
+            $("input.costvalue").prop('checked', false);
+            this.checked = true;
+        });
+    </script>
     </div>
   </div>
 {% endblock panel %}

@@ -536,7 +536,9 @@ function scenariosViewModel() {
         self.reportLoadComplete(false);
         var jqxhr = $.get(showUrl, function(data) {
           var elem = document.getElementById('scenario-show-container');
-          ko.cleanNode(elem);
+          if (elem) {
+            ko.cleanNode(elem);
+          }
           $('#scenario-show-container').empty().append(data);
           app.viewModel.progress = null;
           clearInterval(app.timer);
