@@ -445,7 +445,8 @@ class Command(BaseCommand):
             lyr.save()
 
         theme_name = "Costs"
-        theme, created = Theme.objects.get_or_create(name="auto_%s" % theme_name, display_name=theme_name)
+        theme_longname = "Constraints and Opportunities"
+        theme, created = Theme.objects.get_or_create(name="auto_%s" % theme_name, display_name=theme_longname)
         for c in cs: 
             url = "/tiles/%s/${z}/${x}/${y}.png" % c.dbf_fieldname
             legend = "/media/legends/relative_value.png"
