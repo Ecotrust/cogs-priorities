@@ -474,7 +474,7 @@ class Command(BaseCommand):
             theme = Theme.objects.create(name="auto_%s" % theme_name, display_name=theme_name)
         desc = "Planning unit boundaries"
         lyr = Layer.objects.create(name=name, layer_type="XYZ", url=url, default_on=True,
-                opacity=1.0, description=desc, legend=legend, legend_title=name)
+                opacity=0.4, description=desc, legend=legend, legend_title=name)
         lyr.themes.add(theme)
         lyr.save()
 
