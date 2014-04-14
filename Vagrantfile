@@ -7,14 +7,10 @@ Vagrant::Config.run do |config|
     dev.vm.box = "precise64-custom"
     dev.vm.box_url = "http://labs.ecotrust.org/vagrant_boxes/precise64-custom.box"
     
-    dev.vm"virtualbox" do |v|
-        v.customize[
+    dev.vm.customize [
             'modifyvm', :id,
-            '--name', node[:hostname],
             "--memory", 768,
-            "--cpus", 2
-          ]
-    end
+            "--cpus", 2]
     # ssh defaults to 2222
     dev.vm.forward_port 80, 8080
     dev.vm.forward_port 8000, 8000
@@ -28,14 +24,10 @@ Vagrant::Config.run do |config|
   config.vm.define "stage" do |stage|
     stage.vm.box = "precise64-custom"
     stage.vm.box_url = "http://labs.ecotrust.org/vagrant_boxes/precise64-custom.box"
-    stage.vm"virtualbox" do |v|
-        v.customize[
+    stage.vm.customize [
             'modifyvm', :id,
-            '--name', node[:hostname],
             "--memory", 768,
-            "--cpus", 2
-          ]
-    end
+            "--cpus", 2]
     stage.vm.forward_port 80, 9080
     stage.vm.forward_port 8000, 9000
     # no shared folder
