@@ -22,8 +22,12 @@ from django.utils import simplejson as json
 from madrona.common.models import KmlCache
 from jenks import jenks as get_jenks_breaks
 from collections import defaultdict
+import redis
 
 logger = get_logger()
+
+# connection must match the cache set in scenario_tiles view
+redisconn = redis.Redis(host='localhost', port=6379, db=1)
 
 def cachemethod(cache_key, timeout=60*60*24*365):
     '''
@@ -339,12 +343,27 @@ class Scenario(Analysis):
         Remove any cached values associated with this scenario.
         Warning: additional caches will need to be added to this method
         '''
-        keys = ["%s_results",]
-        keys = [x % self.uid for x in keys]
-        cache.delete_many(keys)
-        for key in keys:
-            assert cache.get(key) == None
-        logger.debug("invalidated cache for %s" % str(keys))
+        if not self.id:
+            return True
+
+        # depends on django-redis as the cache backend!!!
+        # assumes that all caches associated with this scenario contain <uid>_*
+        key_pattern = "%s_*" % self.uid
+        cache.delete_pattern(key_pattern)
+        assert cache.keys(key_pattern) == []
+
+        # remove the xml file
+        try:
+            os.remove(self.mapnik_xml_path)
+        except OSError:
+            pass
+
+        # delete the tiles directly
+        [redisconn.delete(x) for x in redisconn.keys() if self.uid in x]
+
+        # remove the PlanningUnitShapes
+        PlanningUnitShapes.objects.filter(stamp=self.id).delete()
+
         return True
 
     def run(self):
@@ -469,7 +488,7 @@ class Scenario(Analysis):
                 return (0, numreps)
         return (len(outputs), numreps)
 
-    def geojson(self, srid):
+    def geojson(self, srid=None):
         # Note: no reprojection support here 
         rs = self.results
         if 'units' in rs:
@@ -882,6 +901,124 @@ class Scenario(Analysis):
         </Style>
         """
 
+    def thunderstorm_sql(self):
+        """
+        Write planning units containing a `pucount`
+        Effectively a join of the planning units and the marxan output
+        Uses the PlanningUnitShapes mechanism with the scenario id as the stamp
+        """
+        from seak.models import PlanningUnitShapes, Scenario
+        import time
+
+        stamp = int(self.id)
+        sql = "(SELECT geometry, hits FROM seak_planningunitshapes WHERE stamp = %s) as foo" % stamp 
+
+        if PlanningUnitShapes.objects.filter(stamp=stamp).count() > 0:
+            return sql
+
+        logger.debug("##### creating PlanningUnitShapes for %s" % self.uid)
+        path = os.path.join(self.outdir, "thunderstorm.shp")
+        pucount = json.loads(self.output_pu_count)
+        bests = [str(x) for x in json.loads(self.output_best)['best']]
+
+        pushapes = []
+
+        for pu in PlanningUnit.objects.all():
+            try:
+                hits = pucount[str(pu.fid)] 
+            except KeyError:
+                hits = 0
+
+            if pu.fid in bests:
+                best = 1
+            else:
+                best = 0
+
+            pushapes.append(PlanningUnitShapes(stamp=stamp, fid=pu.fid, pu=pu, name=pu.name,
+                hits=hits, bests=best, geometry=pu.geometry))
+
+        PlanningUnitShapes.objects.bulk_create(pushapes)
+        return sql
+
+    @property  
+    def mapnik_xml_path(self):
+        return os.path.join(self.outdir, "results.xml")
+
+    def mapnik_xml(self):
+        """
+        Mapnik representation of the scenario results
+        """
+        path = self.mapnik_xml_path
+        sql = self.thunderstorm_sql()
+
+        if not os.path.exists(path):
+            dbs = settings.DATABASES['default']
+            with open(path, 'w') as fh:
+                xml = """<?xml version="1.0"?>
+                <!DOCTYPE Map [
+                <!ENTITY google_mercator "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over">
+                ]>
+                <Map srs="&google_mercator;">
+                    <Style name="pu" filter-mode="first">
+                        
+                                <Rule>
+                                    <Filter>([hits] &gt;= 20)</Filter>
+                                    <PolygonSymbolizer fill="#91003f" fill-opacity="1.0" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt;= 17)</Filter>
+                                    <PolygonSymbolizer fill="#ce1256" fill-opacity="1.0" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt;= 14)</Filter>
+                                    <PolygonSymbolizer fill="#e7298a" fill-opacity="1.0" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt;= 12)</Filter>
+                                    <PolygonSymbolizer fill="#df65b0" fill-opacity="1.0" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt;= 10)</Filter>
+                                    <PolygonSymbolizer fill="#c994c7" fill-opacity="1.0" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt;= 7)</Filter>
+                                    <PolygonSymbolizer fill="#d4b9da" fill-opacity="1.0" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt; 0)</Filter>
+                                    <PolygonSymbolizer fill="#f1eef6" fill-opacity="1.0" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] = 0)</Filter>
+                                    <PolygonSymbolizer fill="#ffffff" fill-opacity="0.0" />
+                                </Rule>
+                            
+                        <Rule>
+                            <PolygonSymbolizer fill="#ffffff" fill-opacity="0.0" />
+                        </Rule>
+                    </Style>
+                    <Layer name="layer" srs="&google_mercator;">
+                        <StyleName>pu</StyleName>
+
+                        <Datasource>
+                            <Parameter name="type">postgis</Parameter>
+                            <Parameter name="host">%s</Parameter>
+                            <Parameter name="dbname">%s</Parameter>
+                            <Parameter name="user">%s</Parameter>      
+                            <Parameter name="password">%s</Parameter>
+                            <Parameter name="table">%s</Parameter>
+                            <Parameter name="estimate_extent">true</Parameter>
+                            <!-- <Parameter name="extent">-180,-90,180,89.99</Parameter> -->
+                        </Datasource>
+                    </Layer>
+                </Map>""" % (dbs['HOST'], dbs['NAME'], dbs['USER'], dbs['PASSWORD'], sql)
+
+                fh.write(xml)
+                
+        return path
+
+
     class Options:
         form = 'seak.forms.ScenarioForm'
         verbose_name = 'Prioritization Scenario' 
@@ -916,6 +1053,11 @@ class Scenario(Analysis):
                 'seak.views.watershed_marxan',
                 select='single',
                 type='application/zip',
+            ),
+            alternate('Tile',
+                'seak.views.scenario_tile',
+                select='single',
+                type='image/png',
             ),
         )
 
