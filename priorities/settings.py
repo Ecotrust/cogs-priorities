@@ -128,7 +128,7 @@ JS_OPTS = {
     'start_zoom': 3,  
     'num_levels': 9,  
     'center': {'lon': -96, 'lat': 39},
-    'extent': [-127.1, 25.0, -65.0, 51.0],
+    'extent': [-127.1, 25.0, -62.0, 51.0],
     'name_field': 'NAME',
     'sigfigs': 3,
     'zoom_on_select': False,

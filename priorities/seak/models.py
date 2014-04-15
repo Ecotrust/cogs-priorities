@@ -907,27 +907,23 @@ class Scenario(Analysis):
         Effectively a join of the planning units and the marxan output
         Uses the PlanningUnitShapes mechanism with the scenario id as the stamp
         """
-        from seak.models import PlanningUnitShapes, Scenario
-        import time
+        from seak.models import PlanningUnitShapes
 
         stamp = int(self.id)
-        sql = "(SELECT geometry, hits FROM seak_planningunitshapes WHERE stamp = %s) as foo" % stamp 
+        sql = "(SELECT geometry, hits, bests FROM seak_planningunitshapes WHERE stamp = %s) as foo" % stamp 
 
         if PlanningUnitShapes.objects.filter(stamp=stamp).count() > 0:
             return sql
 
-        logger.debug("##### creating PlanningUnitShapes for %s" % self.uid)
-        path = os.path.join(self.outdir, "thunderstorm.shp")
         pucount = json.loads(self.output_pu_count)
-        bests = [str(x) for x in json.loads(self.output_best)['best']]
-
+        bests = [int(x) for x in json.loads(self.output_best)['best']]
         pushapes = []
 
         for pu in PlanningUnit.objects.all():
             try:
                 hits = pucount[str(pu.fid)] 
             except KeyError:
-                hits = 0
+                continue  # don't bother if never hit
 
             if pu.fid in bests:
                 best = 1
@@ -994,12 +990,19 @@ class Scenario(Analysis):
                                     <PolygonSymbolizer fill="#ffffff" fill-opacity="0.0" />
                                 </Rule>
                             
+                    </Style>
+                    <Style name="pu_best">
                         <Rule>
-                            <PolygonSymbolizer fill="#ffffff" fill-opacity="0.0" />
+                            <Filter>([bests] &gt;= 1)</Filter>
+                            <!--
+                            <LineSymbolizer stroke="#000000" stroke-width="0.5" stroke-opacity="1" stroke-linejoin="round" />
+                            -->
+                            <PointSymbolizer/> 
                         </Rule>
                     </Style>
                     <Layer name="layer" srs="&google_mercator;">
                         <StyleName>pu</StyleName>
+                        <StyleName>pu_best</StyleName>
 
                         <Datasource>
                             <Parameter name="type">postgis</Parameter>
@@ -1008,14 +1011,13 @@ class Scenario(Analysis):
                             <Parameter name="user">%s</Parameter>      
                             <Parameter name="password">%s</Parameter>
                             <Parameter name="table">%s</Parameter>
-                            <Parameter name="estimate_extent">true</Parameter>
-                            <!-- <Parameter name="extent">-180,-90,180,89.99</Parameter> -->
+                            <Parameter name="estimate_extent">false</Parameter>
                         </Datasource>
                     </Layer>
                 </Map>""" % (dbs['HOST'], dbs['NAME'], dbs['USER'], dbs['PASSWORD'], sql)
 
                 fh.write(xml)
-                
+
         return path
 
 
@@ -1087,7 +1089,7 @@ class Folder(FeatureCollection):
 
 class PlanningUnitShapes(models.Model):
     pu = models.ForeignKey(PlanningUnit)
-    stamp = models.FloatField()
+    stamp = models.FloatField(db_index=True)
     bests = models.IntegerField(default=0) 
     hits = models.IntegerField(default=0) 
     fid = models.IntegerField(null=True)
