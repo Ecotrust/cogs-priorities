@@ -277,7 +277,7 @@ class Scenario(Analysis):
     input_targets = JSONField(verbose_name='Target Percentage of Habitat')
     input_penalties = JSONField(verbose_name='Penalties for Missing Targets') 
     input_relativecosts = JSONField(verbose_name='Relative Costs')
-    input_geography = JSONField(verbose_name='Input Geography fids')
+    input_geography = JSONField(verbose_name='Input Geography fids', null=True, blank=True) 
     input_scalefactor = models.FloatField(default=0.0) 
     description = models.TextField(default="", null=True, blank=True, verbose_name="Description/Notes")
 
@@ -379,7 +379,9 @@ class Scenario(Analysis):
         targets = self.process_dict(json.loads(self.input_targets))
         penalties = self.process_dict(json.loads(self.input_penalties))
         cost_weights = json.loads(self.input_relativecosts)
-        geography_fids = json.loads(self.input_geography)
+
+        #geography_fids = json.loads(self.input_geography)
+        geography_fids = []
 
         assert len(targets.keys()) == len(penalties.keys()) #== len(ConservationFeature.objects.all())
         assert max(targets.values()) <= 1.0
@@ -537,7 +539,8 @@ class Scenario(Analysis):
         targets = json.loads(self.input_targets)
         penalties = json.loads(self.input_penalties)
         cost_weights = json.loads(self.input_relativecosts)
-        geography = json.loads(self.input_geography)
+        #geography = json.loads(self.input_geography)
+
         targets_penalties = {}
         for k, v in targets.items():
             targets_penalties[k] = {'label': k.replace('---', ' > ').replace('-',' ').title(), 'target': v, 'penalty': None}
@@ -555,7 +558,8 @@ class Scenario(Analysis):
         bestjson = json.loads(self.output_best)
         bestpks = [int(x) for x in bestjson['best']]
         bestpus = PlanningUnit.objects.select_related().filter(pk__in=bestpks).order_by('name')
-        potentialpus = PlanningUnit.objects.filter(fid__in=geography)
+        #potentialpus = PlanningUnit.objects.filter(fid__in=geography)
+        potentialpus = PlanningUnit.objects.all()
         bbox = None
         if bestpus:
             bbox = potentialpus.extent()
@@ -680,7 +684,7 @@ class Scenario(Analysis):
 
         res = {
             'costs': costs, #cost_weights
-            'geography': geography,
+            #'geography': geography,
             'targets_penalties': targets_penalties,
             'area': sum_area, 
             'total_costs': summed_costs, 

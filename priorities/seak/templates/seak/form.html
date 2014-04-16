@@ -57,7 +57,7 @@
         // {% if variable_geography %}
         //     {% for dg in defined_geographies %}
         //     $('#dg_{{dg.slug}}').bind('click', function(e) { 
-        //         var fids = {{dg.planning_unit_fids}}; 
+        //         var fids = {# dg.planning_unit_fids #}; 
         //         //selectGeographyControl.unselectAll();
         //         $.each(fids, function (i, fid) {
         //             var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
@@ -78,7 +78,7 @@
         //     // Just take the first defined geography
         //     {% with dg=defined_geographies.0 %}
         //     $(document).ready( function() { 
-        //         var fids = {{dg.planning_unit_fids}}; 
+        //         var fids = {# dg.planning_unit_fids #}; 
         //         selectGeographyControl.unselectAll();
         //         $.each(fids, function (i, fid) {
         //             var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];

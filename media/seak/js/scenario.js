@@ -11,6 +11,7 @@ function progressViewModel() {
     if (scenario_uid) {
         app.viewModel.scenarios.loadScenarios(scenario_uid);
     }
+    app.viewModel.scenarios.toggleScenarioLayer('on');
     // not "done" until the new report loads, just keep the 100% progress bar up and spinning
     // self.done(true);
   };
@@ -135,7 +136,7 @@ function scenariosViewModel() {
 
 
   self.showScenarioForm = function(action, uid) {
-    self.toggleScenarioLayer('off');
+    self.toggleScenarioLayer('off');  // Don't show the layer while being edited/created
 
     var formUrl;
     if (action === "create") {
@@ -143,7 +144,6 @@ function scenariosViewModel() {
     } else if (action === "edit") {
       formUrl = app.workspaceUtil.actions.getByTitle("Edit")[0];
       formUrl = formUrl.getUrl([uid]);
-      self.toggleScenarioLayer('on');
     }
 
     // MPTODO
@@ -441,8 +441,11 @@ function scenariosViewModel() {
                 var d = JSON.parse(data);
                 scenario_uid = d["X-Madrona-Select"];
                 self.loadScenarios(scenario_uid);
-                self.cancelAddScenario(); // Not acutally cancel, just clear 
-                self.toggleScenarioLayer('off');
+
+                //self.cancelAddScenario(); // Not acutally cancel, just clear 
+                self.showScenarioFormPanel(false);
+                self.showScenarioList(true);
+                self.formSaveError(false);
             })
             .error( function(jqXHR, textStatus, errorThrown) {
                 console.log("ERROR", errorThrown, textStatus);
@@ -520,6 +523,7 @@ function scenariosViewModel() {
   };
 
   self.cancelAddScenario = function () {
+    self.toggleScenarioLayer('off');
     //selectGeographyControl.unselectAll();
     //selectGeographyControl.deactivate();
     keyboardControl.deactivate();
@@ -528,7 +532,6 @@ function scenariosViewModel() {
     self.showScenarioFormPanel(false);
     self.showScenarioList(true);
     self.formSaveError(false);
-    self.toggleScenarioLayer('off');
   };
 
   self.selectControl = {
@@ -536,9 +539,9 @@ function scenariosViewModel() {
        * Controls the map and display panel 
        * when features are selected
        */
-      unselectAll: function() { 
-        // $('#scenario-show-container').empty();
-      },
+      // unselectAll: function() { 
+      //   // $('#scenario-show-container').empty();
+      // },
       select: function(feature) {
 
         var uid = feature.uid();
@@ -562,7 +565,10 @@ function scenariosViewModel() {
           app.viewModel.progress.checkTimer();
         })
         .error(function() { self.reportLoadError(true); })
-        .complete(function() { self.reportLoadComplete(true); });
+        .complete(function() { 
+            self.reportLoadComplete(true);
+            //self.toggleScenarioLayer('on');
+        });
         
         //MPTODO no controls
         //selectGeographyControl.unselectAll();
@@ -588,10 +594,10 @@ function scenariosViewModel() {
     if (!self.planningUnitsLoadComplete()) { return false; }
     //$('#layer-select-toggle').prop("checked", false).change();
 
-    self.selectControl.unselectAll();
+    // self.selectControl.unselectAll();
     self.selectControl.select(feature);
     self.selectedFeature(feature);
-    self.toggleScenarioLayer('on');
+    //self.toggleScenarioLayer('on');
     bbox = feature.bbox();
     if (js_opts.zoom_on_select && bbox && bbox.length === 4) {
         map.zoomToExtent(bbox);
