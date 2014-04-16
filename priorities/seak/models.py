@@ -692,6 +692,10 @@ class Scenario(Analysis):
             'bbox': bbox,
         }
 
+        # trigger caching of hit maps
+        self.thunderstorm_sql()
+        self.mapnik_xml()
+
         return res
         
     @property

@@ -384,8 +384,9 @@
         
         app.timer = null; 
 
+        app.scenarioTileTemplate = "/features/scenario/links/tile/${scenario_uid}/?tile=/${z}/${x}/${y}.png",
         app.utils.loadScenarioLayer = function() {
-            olLayer = map.getLayersByName("Scenario Results")[0];
+            //olLayer = map.getLayersByName("Scenario Results")[0];
 
             var keys = [];
             for (var k in app.viewModel.layers.layerIndex)
@@ -393,15 +394,23 @@
             id = keys.length + 999999; // offset to make sure no collision
             app.scenarioLayerId = id;
 
+            // var layerViewModel = new layerModel({
+            //     name: olLayer.name,
+            //     type: "Vector",
+            //     opacity: 0.5,
+            //     legend: "/media/legends/priorities.png"
+            // });
             var layerViewModel = new layerModel({
-                name: olLayer.name,
-                type: "Vector",
-                opacity: 0.5,
+                name: "Scenario Results",
+                type: "XYZ",
+                opacity: 1.0,
+                url: app.scenarioTileTemplate,
                 legend: "/media/legends/priorities.png"
             });
-            layerViewModel.layer = olLayer;
+            // MPTODO
+            //layerViewModel.layer = olLayer;
             app.viewModel.layers.layerIndex[id] = layerViewModel;
-            olLayer.setOpacity(layerViewModel.opacity());
+            //olLayer.setOpacity(layerViewModel.opacity());
         };
 
         $(document).ready(function () {

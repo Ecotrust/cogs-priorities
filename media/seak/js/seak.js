@@ -123,6 +123,8 @@ function init_map() {
     // allow testing of specific renderers via "?renderer=Canvas", etc
     var renderer = OpenLayers.Util.getParameters(window.location.href).renderer;
     renderer = (renderer) ? [renderer] : OpenLayers.Layer.Vector.prototype.renderers;
+
+    // MPTODO
     pu_layer = new OpenLayers.Layer.Vector("Scenario Results", {
         styleMap: myStyles,
         renderers: renderer,

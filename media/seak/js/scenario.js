@@ -458,15 +458,21 @@ function scenariosViewModel() {
 
         if (status == 'off') {
             layer.deactivateLayer();
+            layer.url = app.scenarioTileTemplate;
         } else if (status == 'on') {
             layer.activateLayer();
+            layer.url = app.scenarioTileTemplate.replace("${scenario_uid}", this.selectedFeature().uid());
         } else {
             if (layer.active()) {
                 layer.deactivateLayer();
+                layer.url = app.scenarioTileTemplate;
             } else {
                 layer.activateLayer();
+                layer.url = app.scenarioTileTemplate.replace("${scenario_uid}", this.selectedFeature().uid());
             }
         }
+        layer.layer.url = layer.url;
+        console.log(layer);
   };
   self.showDeleteDialog = function () {
     $("#scenario-delete-dialog").modal("show");
@@ -527,7 +533,7 @@ function scenariosViewModel() {
       },
       select: function(feature) {
 
-        var uid = feature.uid(); 
+        var uid = feature.uid();
 
         var showUrl = app.workspaceUtil.actions.getByRel("self")[0];
         showUrl = showUrl.getUrl([uid]);
@@ -550,21 +556,23 @@ function scenariosViewModel() {
         .error(function() { self.reportLoadError(true); })
         .complete(function() { self.reportLoadComplete(true); });
         
-        selectGeographyControl.unselectAll();
-        selectFeatureControl.unselectAll();
+        //MPTODO no controls
+        //selectGeographyControl.unselectAll();
+        //selectFeatureControl.unselectAll();
 
-        $.each(feature.potential_fids(), function (i, fid) {
-            var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
-            if (f) { 
-                selectGeographyControl.select(f);
-            }
-        });
-        $.each(feature.selected_fids(), function (i, fid) {
-            var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
-            if (f) { 
-                selectFeatureControl.select(f);
-            }
-        });
+        // [MPTODO] Here's where we loop through features and select stuff
+        // $.each(feature.potential_fids(), function (i, fid) {
+        //     var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
+        //     if (f) { 
+        //         selectGeographyControl.select(f);
+        //     }
+        // });
+        // $.each(feature.selected_fids(), function (i, fid) {
+        //     var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
+        //     if (f) { 
+        //         selectFeatureControl.select(f);
+        //     }
+        // });
       }
    };
 
@@ -574,7 +582,7 @@ function scenariosViewModel() {
 
     self.selectControl.unselectAll();
     self.selectControl.select(feature);
-    self.selectedFeature(feature); 
+    self.selectedFeature(feature);
     self.toggleScenarioLayer('on');
     bbox = feature.bbox();
     if (js_opts.zoom_on_select && bbox && bbox.length === 4) {
