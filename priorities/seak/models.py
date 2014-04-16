@@ -491,10 +491,10 @@ class Scenario(Analysis):
     def geojson(self, srid=None):
         # Note: no reprojection support here 
         rs = self.results
-        if 'units' in rs:
-            selected_fids = [r['fid'] for r in rs['units']]
-        else:
-            selected_fids = []
+        # if 'units' in rs:
+        #     selected_fids = [r['fid'] for r in rs['units']]
+        # else:
+        #     selected_fids = []
         
         if 'bbox' in rs: 
             bbox = rs['bbox']
@@ -525,8 +525,8 @@ class Scenario(Analysis):
                'date_modified': self.date_modified.strftime("%m/%d/%y %I:%M%P"),
                'user': self.user.username,
                'user_fullname': fullname,
-               'selected_fids': selected_fids,
-               'potential_fids': json.loads(self.input_geography)
+               #'selected_fids': selected_fids,
+               #'potential_fids': json.loads(self.input_geography)
             }
         }
         return json.dumps(serializable)

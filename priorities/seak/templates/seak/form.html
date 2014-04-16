@@ -53,48 +53,50 @@
             </ul>
         </div>
         <script>
-        {% if variable_geography %}
-            {% for dg in defined_geographies %}
-            $('#dg_{{dg.slug}}').bind('click', function(e) { 
-                var fids = {{dg.planning_unit_fids}}; 
-                selectGeographyControl.unselectAll();
-                $.each(fids, function (i, fid) {
-                    var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
-                    if (f) { 
-                        selectGeographyControl.select(f);
-                    }
-                });
-                // Zoom to selected features
-                var fts = pu_layer.selectedFeatures;
-                var bounds = fts[0].geometry.getBounds().clone();
-                for(var i=1;i<fts.length;i++) {
-                    bounds.extend(fts[i].geometry.getBounds());
-                }
-                map.zoomToExtent(bounds,false);
-            });
-            {% endfor %}
-        {% else %}
-            // Just take the first defined geography
-            {% with dg=defined_geographies.0 %}
-            $(document).ready( function() { 
-                var fids = {{dg.planning_unit_fids}}; 
-                selectGeographyControl.unselectAll();
-                $.each(fids, function (i, fid) {
-                    var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
-                    if (f) { 
-                        selectGeographyControl.select(f);
-                    }
-                });
-                // Zoom to selected features
-                var fts = pu_layer.selectedFeatures;
-                var bounds = fts[0].geometry.getBounds().clone();
-                for(var i=1;i<fts.length;i++) {
-                    bounds.extend(fts[i].geometry.getBounds());
-                }
-                map.zoomToExtent(bounds,false);
-            });
-            {% endwith %}
-        {% endif %}
+
+        // {% if variable_geography %}
+        //     {% for dg in defined_geographies %}
+        //     $('#dg_{{dg.slug}}').bind('click', function(e) { 
+        //         var fids = {{dg.planning_unit_fids}}; 
+        //         //selectGeographyControl.unselectAll();
+        //         $.each(fids, function (i, fid) {
+        //             var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
+        //             if (f) { 
+        //                 selectGeographyControl.select(f);
+        //             }
+        //         });
+        //         // Zoom to selected features
+        //         var fts = pu_layer.selectedFeatures;
+        //         var bounds = fts[0].geometry.getBounds().clone();
+        //         for(var i=1;i<fts.length;i++) {
+        //             bounds.extend(fts[i].geometry.getBounds());
+        //         }
+        //         map.zoomToExtent(bounds,false);
+        //     });
+        //     {% endfor %}
+        // {% else %}
+        //     // Just take the first defined geography
+        //     {% with dg=defined_geographies.0 %}
+        //     $(document).ready( function() { 
+        //         var fids = {{dg.planning_unit_fids}}; 
+        //         selectGeographyControl.unselectAll();
+        //         $.each(fids, function (i, fid) {
+        //             var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
+        //             if (f) { 
+        //                 selectGeographyControl.select(f);
+        //             }
+        //         });
+        //         // Zoom to selected features
+        //         var fts = pu_layer.selectedFeatures;
+        //         var bounds = fts[0].geometry.getBounds().clone();
+        //         for(var i=1;i<fts.length;i++) {
+        //             bounds.extend(fts[i].geometry.getBounds());
+        //         }
+        //         map.zoomToExtent(bounds,false);
+        //     });
+        //     {% endwith %}
+        // {% endif %}
+
         </script>
         <br/>
         <p>{% flatblock 'geography-fine-tune' 3600 %}</p>
@@ -227,12 +229,14 @@
                                         </div>
                                     </div>
 
+                                    <!--
                                     {% if slider_show_raw %}
                                     <div class="input-append">
                                         <input type="text" class="input-small rawtargetvalue" id="rawtarget---{{cf.id_string}}" value="0.0"/>
                                         <span><small>{{cf.units}}</small></span>
                                     </div>
                                     {% endif %} 
+                                    -->
                                 </div>
                             </div>
 
@@ -256,12 +260,14 @@
                                         {% endif %}
                                     </div>
 
+                                    <!-- 
                                     {% if slider_show_raw %}
                                     <div class="input-append">
                                         <input type="text" class="input-small rawtargetvalue" id="rawtarget---{{cf.id_string}}" value="0.0"/>
                                         <span><small>{{cf.units}}</small></span>
                                     </div>
                                     {% endif %}
+                                    -->
                                 </div>
                             </div>
                             <div class="row-fluid">

@@ -114,9 +114,11 @@ def watershed_marxan(request, instance):
     response.write(zip_stream)
     return response
 
-@cache_page(settings.CACHE_TIMEOUT)
-@cache_control(must_revalidate=False, max_age=settings.CACHE_TIMEOUT)
+#@cache_page(settings.CACHE_TIMEOUT)
+#@cache_control(must_revalidate=False, max_age=settings.CACHE_TIMEOUT)
 def planning_units_geojson(request):
+    raise Exception
+    
     def get_feature_json(geom_json, prop_json):
         return """{
             "type": "Feature",
