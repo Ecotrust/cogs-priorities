@@ -59,7 +59,7 @@ MARXAN_BIN =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'ma
 MARXAN_OUTDIR =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_output'))
 MARXAN_TEMPLATEDIR = os.path.join(MARXAN_OUTDIR, 'template')
 MARXAN_NUMREPS = 20
-MARXAN_NUMITNS = 2000000
+MARXAN_NUMITNS = 50000
 
 LOG_FILE = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'logs', 'seak.log'))
 MEDIA_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'mediaroot'))

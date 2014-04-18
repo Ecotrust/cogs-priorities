@@ -9,7 +9,8 @@ class MarxanError(Exception):
 
 class MarxanAnalysis(object):
 
-    def __init__(self, pucosts, cfs, outdir, name="seak"):
+    def __init__(self, pucosts, cfs, outdir, scenario_id, name="seak"):
+        self.scenario_id = scenario_id
         self.outdir = os.path.realpath(outdir)
         self.marxan_bin = os.path.realpath(settings.MARXAN_BIN)
         if not os.path.exists(self.marxan_bin):
@@ -166,3 +167,10 @@ VERBOSITY 3
                 log.warn("Check the _best.csv file .. got one with status > 1!") 
         fh.close()
         return pks
+
+    # def compile_results(self):
+    #     from seak.models import Scenario
+    #     scenario = Scenario.objects.get(id=self.scenario_id)
+    #     res = scenario.results  # cache it
+    #     return
+

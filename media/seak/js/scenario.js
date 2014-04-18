@@ -11,13 +11,13 @@ function progressViewModel() {
     if (scenario_uid) {
         app.viewModel.scenarios.loadScenarios(scenario_uid);
     }
-    app.viewModel.scenarios.toggleScenarioLayer('on');
+    // app.viewModel.scenarios.toggleScenarioLayer('on');
     // not "done" until the new report loads, just keep the 100% progress bar up and spinning
-    // self.done(true);
   };
   self.checkTimer = function() {
     var checkProgress = function () {
         var url = $('#selected_progress_url').attr('value');
+        var marxan_portion = 0.8; // marxan takes x percent of the total runtime, rest is compiling results
         var selected = app.viewModel.scenarios.selectedFeature();
         if (!selected) {
             clearInterval(app.timer);
@@ -35,7 +35,8 @@ function progressViewModel() {
                     app.timer = null;
                 }
                 var pct = parseInt((data.complete / data.total) * 100.0, 10);
-                self.progressBarWidth(pct + "%");
+
+                self.progressBarWidth(2 + (pct * marxan_portion) + "%");
                 if (pct >= 100) {
                     uid = app.viewModel.scenarios.selectedFeature().uid();
                     self.triggerDone(uid);
@@ -501,12 +502,9 @@ function scenariosViewModel() {
 
   self.selectScenario = function(feature, event) {
     if (!self.planningUnitsLoadComplete()) { return false; }
-    //$('#layer-select-toggle').prop("checked", false).change();
 
-    // self.selectControl.unselectAll();
     self.selectControl.select(feature);
     self.selectedFeature(feature);
-    //self.toggleScenarioLayer('on');
     bbox = feature.bbox();
     if (js_opts.zoom_on_select && bbox && bbox.length === 4) {
         map.zoomToExtent(bbox);
@@ -572,14 +570,13 @@ function scenariosViewModel() {
         if (scenario_uid) {
             var theScenario = self.getScenarioByUid(scenario_uid);
             self.selectScenario(theScenario);
+            //self.toggleScenarioLayer('on');
         }
      })
     .error(function() { self.scenarioLoadError(true); })
     .complete(function() {
         self.scenarioLoadComplete(true);
-        //$('.scenario-row').tooltip({'placement': 'right', 'animation': true});
     });
-
   };
 
   self.getScenarioByUid = function(uid) {
@@ -594,7 +591,6 @@ function scenariosViewModel() {
   };
 
   self.backToScenarioList = function() {
-    //selectFeatureControl.unselectAll();
     markers.clearMarkers();
     self.selectedFeature(false);
     self.toggleScenarioLayer('off');

@@ -55,15 +55,15 @@
                                             </div>
                                             <div class="alert alert-error" data-bind="visible: scenarios.scenarioLoadError">
                                                 <p><strong> Could not load scenario list!</strong></p>
-                                                <p>Please try again... if the error persists, please contact us.</p>
+                                                <p>Please <strong>Refresh</strong> and try again... if the error persists, please contact us.</p>
                                             </div>
                                             <div class="alert alert-error" data-bind="visible: scenarios.planningUnitsLoadError">
                                                 <p><strong> Could not load planning units!</strong></p>
-                                                <p> Please try again... if the error persists, please contact us.</p>
+                                                <p> Please <strong>Refresh</strong> and try again... if the error persists, please contact us.</p>
                                             </div>
                                             <div class="alert alert-error" data-bind="visible: scenarios.formLoadError">
                                                 <p><strong> Could not load the scenario form!</strong></p>
-                                                <p> Please try again... if the error persists, please contact us.</p>
+                                                <p> Please <strong>Refresh</strong> and try again... if the error persists, please contact us.</p>
                                             </div>
                                             <div data-bind="if: scenarios.scenarioList().length > 0">
                                                 <table class="table table-scenariolist table-bordered table-condensed">
@@ -386,20 +386,12 @@
 
         app.scenarioTileTemplate = "/features/scenario/links/tile/${scenario_uid}/?tile=/${z}/${x}/${y}.png",
         app.utils.loadScenarioLayer = function() {
-            //olLayer = map.getLayersByName("Scenario Results")[0];
-
             var keys = [];
             for (var k in app.viewModel.layers.layerIndex)
                 keys.push(k);
             id = keys.length + 999999; // offset to make sure no collision
             app.scenarioLayerId = id;
 
-            // var layerViewModel = new layerModel({
-            //     name: olLayer.name,
-            //     type: "Vector",
-            //     opacity: 0.5,
-            //     legend: "/media/legends/priorities.png"
-            // });
             var layerViewModel = new layerModel({
                 name: "Scenario Results",
                 type: "XYZ",
@@ -407,10 +399,8 @@
                 url: app.scenarioTileTemplate,
                 legend: "/media/legends/priorities.png"
             });
-            // MPTODO
-            //layerViewModel.layer = olLayer;
+
             app.viewModel.layers.layerIndex[id] = layerViewModel;
-            //olLayer.setOpacity(layerViewModel.opacity());
         };
 
         $(document).ready(function () {

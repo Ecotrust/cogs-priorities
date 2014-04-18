@@ -462,11 +462,11 @@ class Scenario(Analysis):
         pucosts = zip(pus, final_costs)
 
         logger.debug("Creating the MarxanAnalysis object")
-        m = MarxanAnalysis(pucosts, cfs, self.outdir)
+        m = MarxanAnalysis(pucosts, cfs, self.outdir, self.id)
 
         logger.debug("Firing off the process")
         check_status_or_begin(marxan_start, task_args=(m,), polling_url=self.get_absolute_url())
-        self.process_results()
+        self.process_output()
         return True
 
     @property
@@ -488,7 +488,18 @@ class Scenario(Analysis):
         if len(outputs) == numreps:
             if not self.done:
                 return (0, numreps)
-        return (len(outputs), numreps)
+
+        repsdone = len(outputs)
+
+        # compile_proportion = 0.15
+        # compile_int = int(compile_proportion * numreps)
+
+        # key = "seak_scenario_%s_results" % self.id
+        # if cache.get(key):
+        #     repsdone += compile_int
+
+        # return (repsdone, numreps + compile_int)
+        return (repsdone, numreps)
 
     def geojson(self, srid=None):
         # Note: no reprojection support here 
@@ -536,11 +547,13 @@ class Scenario(Analysis):
     @property
     @cachemethod("seak_scenario_%(id)s_results")
     def results(self):
+        print "#### Starting results..."
         targets = json.loads(self.input_targets)
         penalties = json.loads(self.input_penalties)
         cost_weights = json.loads(self.input_relativecosts)
         #geography = json.loads(self.input_geography)
 
+        print "\tTarget and Penalties"
         targets_penalties = {}
         for k, v in targets.items():
             targets_penalties[k] = {'label': k.replace('---', ' > ').replace('-',' ').title(), 'target': v, 'penalty': None}
@@ -566,7 +579,7 @@ class Scenario(Analysis):
         best = []
         logger.debug("looping through bestpus queryset")
 
-        
+        print "\tScaling costs"
         scaled_costs = {}
         all_costs = Cost.objects.all()
         scaled_breaks = {}
@@ -595,6 +608,7 @@ class Scenario(Analysis):
         sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid') if x.slug in scaled_costs.keys()]
         
         # TODO: Optimize this loop, can take several seconds
+        print "\tbestpus"
         summed_costs = {}
         for pu in bestpus:
             centroid = pu.centroid 
@@ -632,6 +646,7 @@ class Scenario(Analysis):
         sum_area = sum([x.area for x in bestpus])
 
         # Parse mvbest
+        print "\tparse mvbest"
         # TODO: Optimize this loop, can take several seconds
         fh = open(os.path.join(self.outdir, "output", "seak_mvbest.csv"), 'r')
         lines = [x.strip().split(',') for x in fh.readlines()[1:]]
@@ -737,7 +752,7 @@ class Scenario(Analysis):
 
         return (code, "<p>%s</p>" % status)
 
-    def process_results(self):
+    def process_output(self):
         if process_is_complete(self.get_absolute_url()):
             chosen = get_process_result(self.get_absolute_url())
             wshds = PlanningUnit.objects.filter(pk__in=chosen)
@@ -755,7 +770,7 @@ class Scenario(Analysis):
 
     @property
     def done(self):
-        """ Boolean; is process complete? """
+        """ Boolean; is MARXAN process complete? """
         done = True
         if self.output_best is None: 
             done = False
@@ -766,7 +781,7 @@ class Scenario(Analysis):
             done = True
             # only process async results if output fields are blank
             # this means we have to recheck after running
-            self.process_results()
+            self.process_output()
             if self.output_best is None: 
                 done = False
             if self.output_pu_count is None: 
