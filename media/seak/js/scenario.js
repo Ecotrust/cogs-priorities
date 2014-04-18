@@ -146,13 +146,6 @@ function scenariosViewModel() {
       formUrl = formUrl.getUrl([uid]);
     }
 
-    // MPTODO
-    //selectFeatureControl.unselectAll();
-    //selectGeographyControl.activate();
-
-    // MPTODO
-    //pu_layer.styleMap.styles['default'].defaultStyle.display = true;
-
     // Get a lookup dict for id to dbf fieldname conversion
     var lookup_url = "/seak/id_lookup.json";
     var idLookup;
@@ -168,13 +161,6 @@ function scenariosViewModel() {
         idLookup = null;
     });
 
-    // // Call to get a raw value from a slider value
-    // var getRawTarget = function(val, id) {
-    //     var dbfFieldname = idLookup[id];
-    //     var raw = (val/100.0 * cfTotals[dbfFieldname]).format(-2, ',', '.'); 
-    //     return raw;
-    // }; 
-
     var applySliders = function() {
         //getGeographyFieldInfo();
         $.each( $(".slider-range-single"), function(k, sliderrange) {
@@ -188,12 +174,10 @@ function scenariosViewModel() {
                 change: function( event, ui ) {
                     $( "#penalty---" + id ).val( ui.value );
                     $( "#target---" + id ).val( ui.value );
-                    // $( "#rawtarget---" + id ).val( getRawTarget(ui.value, id) );
                 },
                 slide: function( event, ui ) {
                     $( "#penalty---" + id ).val( ui.value );
                     $( "#target---" + id ).val( ui.value );
-                    // $( "#rawtarget---" + id ).val( getRawTarget(ui.value, id) );
                 }
             });
         });
@@ -225,11 +209,9 @@ function scenariosViewModel() {
                 max: 100,
                 change: function( event, ui ) {
                     $( "#target---" + id ).val( ui.value );
-                    // $( "#rawtarget---" + id ).val( getRawTarget(ui.value, id) );
                 },
                 slide: function( event, ui ) {
                     $( "#target---" + id ).val( ui.value );
-                    // $( "#rawtarget---" + id ).val( getRawTarget(ui.value, id) );
                 }
             });
         });
@@ -257,31 +239,8 @@ function scenariosViewModel() {
             $.each( $('.targetvalue'), function(k, target) { $(target).val(0); });
             $.each( $('.penaltyvalue'), function(k, penalty) { $(penalty).val(0); });
             $.each( $('.costvalue'), function(k, cost) { $(cost).removeAttr('checked'); });
-
-            // MPTODO
-            // Select and apply geography
-            // var in_geog = JSON.parse($('#id_input_geography').val());
-            // $.each(in_geog, function (i, fid) {
-            //     var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
-            //     if (f) {
-            //         selectGeographyControl.select(f);
-            //     } else {
-            //         console.log("warning: fid " + fid + " is not valid");
-            //     }
-            // });
              
             applySliders();
-
-            // MPTODO
-            // // Apply Costs
-            // var in_costs = JSON.parse($('#id_input_relativecosts').val());
-            // $.each(in_costs, function(key, val) {
-            //     if (val > 0) {
-            //         $("#cost---" + key).attr('checked','checked');
-            //     } else {
-            //         $("#cost---" + key).removeAttr('checked');
-            //     }
-            // });
 
             // Apply Targets and Penalties
             var in_targets = JSON.parse($('#id_input_targets').val());
@@ -324,20 +283,8 @@ function scenariosViewModel() {
                     utfClickControl.deactivate();
                     break;
                 case "tab-costs":
-                    // Show only controls for fields in all planning units
-                    // getGeographyFieldInfo();
-                    // $('tr.cost-row').addClass('hide');
-                    // $.each(costFields, function(idx, val) {
-                    //     $('tr#row-' + val).removeClass('hide');
-                    // });
                     break;
                 case "tab-species":
-                    // getGeographyFieldInfo();
-                    // Show only controls for fields in all planning units
-                    // $('tr.cf-row').addClass('hide');
-                    // $.each(cfFields, function(idx, val) {
-                    //     $('tr#row-' + val).removeClass('hide');
-                    // });
                     $.each($('div.accordion-group-objective'), function() {
                         $(this).removeClass('hide');
                         if($(this).find('tr.cf-row:not(.hide)').length === 0) {
@@ -361,16 +308,9 @@ function scenariosViewModel() {
         var targets = {};
         var penalties = {};
         var costs = {};
-        //var geography_fids = [];
         var totaltargets = 0;
         var totalpenalties = 0;
-        //var totalfids = 0;
 
-        // Get geography constraints
-        // $.each(pu_layer.selectedFeatures, function(k, v) { 
-        //     geography_fids.push(v.data.fid); 
-        //     totalfids += 1;
-        // });
         // Get targets
         $("#form-cfs tr.cf-row:not(.hide) input.targetvalue").each( function(index, elem) {
             var xid = $(elem).attr("id");
@@ -407,12 +347,7 @@ function scenariosViewModel() {
         $(frm).find('textarea#id_input_targets').val( JSON.stringify(targets) );
         $(frm).find('textarea#id_input_penalties').val( JSON.stringify(penalties) );
         $(frm).find('textarea#id_input_relativecosts').val( JSON.stringify(costs) );
-        // $(frm).find('textarea#id_input_geography').val( JSON.stringify(geography_fids) );
 
-        // if (totalfids === 0) {
-        //     alert("Please complete the scenario form");
-        //     $("#formtabs a[href='#geographytab']").tab('show');
-        // } else 
         if (totalpenalties === 0 || totaltargets === 0) {
             alert("Please complete the scenario form");
             $("#formtabs a[href='#speciestab']").tab('show');
@@ -539,9 +474,6 @@ function scenariosViewModel() {
        * Controls the map and display panel 
        * when features are selected
        */
-      // unselectAll: function() { 
-      //   // $('#scenario-show-container').empty();
-      // },
       select: function(feature) {
 
         var uid = feature.uid();
@@ -569,24 +501,6 @@ function scenariosViewModel() {
             self.reportLoadComplete(true);
             //self.toggleScenarioLayer('on');
         });
-        
-        //MPTODO no controls
-        //selectGeographyControl.unselectAll();
-        //selectFeatureControl.unselectAll();
-
-        // [MPTODO] Here's where we loop through features and select stuff
-        // $.each(feature.potential_fids(), function (i, fid) {
-        //     var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
-        //     if (f) { 
-        //         selectGeographyControl.select(f);
-        //     }
-        // });
-        // $.each(feature.selected_fids(), function (i, fid) {
-        //     var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
-        //     if (f) { 
-        //         selectFeatureControl.select(f);
-        //     }
-        // });
       }
    };
 

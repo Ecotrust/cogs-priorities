@@ -1,14 +1,9 @@
 var map;
 var hilites;
-// var pu_layer;
 var markers;
-// var selectFeatureControl;
 var keyboardControl;
-// var selectGeographyControl;
 var utfClickControl;
-// var costFields = [];
-// var cfFields = [];
-// var cfTotals = {};
+
 
 Math.sigfig = function (num, sig) {
     if (num === 0)
@@ -20,43 +15,6 @@ Math.sigfig = function (num, sig) {
         digits = 1;
     return num.toFixed(digits-1);
 };
-
-// function getGeographyFieldInfo() {
-//     // Find the conservation features, totals and costs represented in ALL of the selected planning units.
-//     if (pu_layer.selectedFeatures.length >= 1) {
-//         var costList = pu_layer.selectedFeatures[0].attributes.cost_fields;
-//         var cfList = pu_layer.selectedFeatures[0].attributes.cf_fields;
-//         var cfListTotals = {};
-//         $.each( cfList, function(idx, cf) { 
-//             cfListTotals[cf] = 0;
-//         });
-//         var tmpList;
-//         $.each( pu_layer.selectedFeatures, function(idx, feat) { 
-//             // handle costs
-//             tmpList = feat.attributes.cost_fields;
-//             costList = costList.intersect(tmpList); 
-
-//             // handle conservation features
-//             tmpList = feat.attributes.cf_fields;
-//             cfList = cfList.intersect(tmpList); 
-
-//             // get cf values and add to total
-//             $.each( cfList, function(idx, cf) { 
-//                 cfListTotals[cf] += feat.attributes.cf_values[cf]; 
-//             });
-//         });
-//         costFields = costList;
-//         cfFields = cfList;
-//         cfTotals = cfListTotals;
-//         return {
-//             'costList': costList, 
-//             'cfList': cfList, 
-//             'cfTotals': cfListTotals
-//         };
-//     } else { 
-//         return {}; 
-//     }
-// }
 
 function init_map() {
     var latlon = new OpenLayers.Projection("EPSG:4326");
@@ -110,44 +68,12 @@ function init_map() {
             fillOpacity: 1.0,
             graphicZIndex: 2
         })
-        // "select_geography": new OpenLayers.Style({
-        //     display: true,
-        //     strokeWidth: 1.0,
-        //     strokeColor: "#777777",
-        //     strokeOpacity: 1.0,
-        //     fillColor: "#777777",
-        //     fillOpacity: 1.0 
-        // })
     });
 
     // allow testing of specific renderers via "?renderer=Canvas", etc
     var renderer = OpenLayers.Util.getParameters(window.location.href).renderer;
     renderer = (renderer) ? [renderer] : OpenLayers.Layer.Vector.prototype.renderers;
 
-    // MPTODO
-    // pu_layer = new OpenLayers.Layer.Vector("Scenario Results", {
-    //     styleMap: myStyles,
-    //     renderers: renderer,
-    //     displayInLayerSwitcher: false
-    // });
-    // var url = "/seak/planning_units.geojson";
-    // var jqxhr = $.ajax({
-    //     url: url, 
-    //     cache: true,
-    //     dataType: 'json', 
-    //     success: function(data) {
-    //         var gformat = new OpenLayers.Format.GeoJSON();
-    //         try {
-    //             var feats = gformat.read(data); 
-    //             pu_layer.addFeatures(feats);
-    //         } catch(err) {
-    //             console.log(err.message);
-    //             app.viewModel.scenarios.planningUnitsLoadError(true);
-    //         }
-    //     }
-    // })
-    // .error(function() { app.viewModel.scenarios.planningUnitsLoadError(true); })
-    // .complete(function() { app.viewModel.scenarios.planningUnitsLoadComplete(true); });
     app.viewModel.scenarios.planningUnitsLoadComplete(true);
 
     map.isValidZoomLevel = function(zoomLevel) {
@@ -157,44 +83,12 @@ function init_map() {
             (zoomLevel >= this.minZoomLevel) &&
             (zoomLevel < this.minZoomLevel + this.numZoomLevels));
     };
-    
-    // selectFeatureControl = new OpenLayers.Control.SelectFeature(
-    //     pu_layer,
-    //     {
-    //         multiple: true
-    //     }
-    // );
-
-    // var geographySelectCallback = function(){ 
-    //     $('#geographySelectionCount').html(pu_layer.selectedFeatures.length);
-    // };
-
-    // selectGeographyControl = new OpenLayers.Control.SelectFeature(
-    //     pu_layer,
-    //     {
-    //         clickout: true, 
-    //         toggle: true,
-    //         multiple: true, 
-    //         hover: false,
-    //         toggleKey: "ctrlKey", // ctrl key removes from selection
-    //         multipleKey: "shiftKey", // shift key adds to selection
-    //         renderIntent: "select_geography",
-    //         box: true,
-    //         onSelect: geographySelectCallback,
-    //         onUnselect: geographySelectCallback
-    //     }
-    // );
 
     keyboardControl = new OpenLayers.Control.KeyboardDefaults();
 
-    //selectFeatureControl.deactivate();
     keyboardControl.deactivate();
-    //selectGeographyControl.deactivate();
-    //map.addControls([selectFeatureControl, selectGeographyControl, keyboardControl]);
     map.addControls([keyboardControl]);
 
-    // MPTODO
-    // map.addLayers([terrain, pu_layer, pu_utfgrid, markers]);  // must have at least one base layer
     map.addLayers([terrain, pu_utfgrid, markers]);  // must have at least one base layer
     map.getLayersByName("Markers")[0].setZIndex(9999);
 
