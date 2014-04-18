@@ -130,10 +130,10 @@
                         </td>
                         {% for v in w.costs %}
                         <td>
-                            <span class="hide" title="{{v.raw|floatformat:0}}"></span>
+                            <span class="hide" title="{{v.raw|floatformat:3}}"></span>
                             <span>
                                 {% if show_raw_costs %}
-                                {{v.raw|floatformat:0|intcomma}}
+                                {{v.raw|floatformat:2|intcomma}}
                                 {% endif %}
                             </span>
                             <span class="badge {% if v.class == 'low' %}badge{% elif v.class == 'med' %}badge-warning{% elif v.class == 'high' %}badge-success{% endif %}">
