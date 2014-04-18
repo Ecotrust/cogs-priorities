@@ -11,7 +11,6 @@ function progressViewModel() {
     if (scenario_uid) {
         app.viewModel.scenarios.loadScenarios(scenario_uid);
     }
-    // app.viewModel.scenarios.toggleScenarioLayer('on');
     // not "done" until the new report loads, just keep the 100% progress bar up and spinning
   };
   self.checkTimer = function() {
@@ -46,6 +45,8 @@ function progressViewModel() {
         var elem = $('#scenario_progress_html');  // if this doesn't exist, instance is done
         if (elem.length === 0) {
             self.triggerDone();
+            // Only show the layer if we're getting a fresh layer with a completed status
+            app.viewModel.scenarios.toggleScenarioLayer('on');
             return false;
         }
     };
@@ -417,6 +418,10 @@ function scenariosViewModel() {
                 layer.url = app.scenarioTileTemplate.replace("${scenario_uid}", this.selectedFeature().uid());
             }
         }
+
+        // always try to bust the cache
+        layer.url += "&_=" + String(Math.random() * 1000000);
+
         if (layer.layer) {
             layer.layer.url = layer.url;
         }
@@ -570,7 +575,6 @@ function scenariosViewModel() {
         if (scenario_uid) {
             var theScenario = self.getScenarioByUid(scenario_uid);
             self.selectScenario(theScenario);
-            //self.toggleScenarioLayer('on');
         }
      })
     .error(function() { self.scenarioLoadError(true); })
