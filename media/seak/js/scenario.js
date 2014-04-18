@@ -439,7 +439,6 @@ function scenariosViewModel() {
         self.selectedFeature(false);
         self.showScenarioList(true);
         self.listStart(0);
-        //self.selectControl.unselectAll();
       }
     });
   };
@@ -459,11 +458,7 @@ function scenariosViewModel() {
 
   self.cancelAddScenario = function () {
     self.toggleScenarioLayer('off');
-    //selectGeographyControl.unselectAll();
-    //selectGeographyControl.deactivate();
     keyboardControl.deactivate();
-    // pu_layer.styleMap.styles['default'].defaultStyle.display = "none";
-    // pu_layer.redraw();
     self.showScenarioFormPanel(false);
     self.showScenarioList(true);
     self.formSaveError(false);
