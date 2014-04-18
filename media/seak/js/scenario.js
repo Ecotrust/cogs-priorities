@@ -234,8 +234,7 @@ function scenariosViewModel() {
         // If we're in EDIT mode, set the form values 
         if ($('#id_input_targets').val() &&
             $('#id_input_penalties').val() &&
-            $('#id_input_relativecosts').val() &&
-            $('#id_input_geography').val()) {
+            $('#id_input_relativecosts').val()) {
  
             // Reset to zeros 
             $.each( $('.targetvalue'), function(k, target) { $(target).val(0); });
@@ -244,12 +243,24 @@ function scenariosViewModel() {
              
             applySliders();
 
+            // Apply Costs
+            var in_costs = JSON.parse($('#id_input_relativecosts').val());
+            $.each(in_costs, function(key, val) {
+                if (val > 0) {
+                    $("#cost---" + key).attr('checked','checked');
+                } else {
+                    $("#cost---" + key).removeAttr('checked');
+                }
+            });
             // Apply Targets and Penalties
             var in_targets = JSON.parse($('#id_input_targets').val());
             $.each(in_targets, function(key, val) {
                 $("#target---" + key).val(val * 100);
                 $("#targetrange---" + key).slider("value", val * 100);
                 $("#singlerange---" + key).slider("value", val * 100);
+                if (val > 0 ) {
+                    $('#singlerange---' + key).closest(".accordion-group").find('.cf-collapse').collapse();
+                }
             });
             var in_penalties = JSON.parse($('#id_input_penalties').val());
             $.each(in_penalties, function(key, val) {
