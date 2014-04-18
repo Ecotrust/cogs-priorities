@@ -11,7 +11,7 @@ var utfClickControl;
 // var cfTotals = {};
 
 Math.sigfig = function (num, sig) {
-    if (num == 0)
+    if (num === 0)
         return 0;
     if (Math.round(num) == num)
         return num;
@@ -19,7 +19,7 @@ Math.sigfig = function (num, sig) {
     if (digits < 1)
         digits = 1;
     return num.toFixed(digits-1);
-}
+};
 
 // function getGeographyFieldInfo() {
 //     // Find the conservation features, totals and costs represented in ALL of the selected planning units.
@@ -82,17 +82,17 @@ function init_map() {
 
     var terrain = new OpenLayers.Layer.XYZ( "National Geographic Base Map",
         "http://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/${z}/${y}/${x}",
-        {sphericalMercator: true, 
+        {sphericalMercator: true,
          opacity: 0.35,
-         attribution: "National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC" } 
+         attribution: "National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC"}
     );
 
     var pu_utfgrid = new OpenLayers.Layer.UTFGrid({
          url: "/tiles/utfgrid/${z}/${x}/${y}.json",
          utfgridResolution: 4,
-         sphericalMercator: true, 
+         sphericalMercator: true,
          displayInLayerSwitcher: false
-        } 
+        }
     );
 
     var myStyles = new OpenLayers.StyleMap({
@@ -201,15 +201,15 @@ function init_map() {
     var lookup_url = "/seak/field_lookup.json";
     var fieldLookup;
     var xhr = $.ajax({
-        url: lookup_url, 
+        url: lookup_url,
         cache: true,
-        dataType: 'json', 
-        success: function(data) { 
-            fieldLookup = data; 
+        dataType: 'json',
+        success: function(data) {
+            fieldLookup = data;
         }
     })
-    .error( function() { 
-        fieldLookup = null; 
+    .error( function() {
+        fieldLookup = null;
     });
 
     var sortByKeys = function(obj) {
@@ -242,8 +242,8 @@ function init_map() {
     };
 
     var utfgridCallback = function(infoLookup) {
-        var msg = ""; 
-        var puname = "Watershed Info"; 
+        var msg = "";
+        var puname = "Watershed Info";
         $("#info").hide();
         var fnc = function(idx, val) {
             if (val >= 0) { // Assume negative is null 
@@ -255,8 +255,8 @@ function init_map() {
                         msg += "<tr><td width=\"75%\">"+ idx + "</td><td>" + val + "</td></tr>";
                     }
                 }
-            } 
-            if(idx == js_opts.name_field) { 
+            }
+            if(idx == js_opts.name_field) {
                 puname = val;
             }
         };
@@ -302,7 +302,7 @@ function init_map() {
 // dataTables plugin to sort number OR string by hidden title attribute
 jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     "title-numeric-pre": function ( a ) {
-      try { 
+      try {
           var x = a.match(/title="*(-?[0-9\.]+)/)[1];
           return parseFloat( x );
       } catch(err) {

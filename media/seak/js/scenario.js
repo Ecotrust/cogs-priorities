@@ -21,7 +21,7 @@ function progressViewModel() {
         var selected = app.viewModel.scenarios.selectedFeature();
         if (!selected) {
             clearInterval(app.timer);
-            app.timer = null; 
+            app.timer = null;
             return false;
         }
         if (!self.done() && !selected.done()) {
@@ -43,9 +43,9 @@ function progressViewModel() {
             });
         }
         var elem = $('#scenario_progress_html');  // if this doesn't exist, instance is done
-        if (elem.length === 0) { 
+        if (elem.length === 0) {
             self.triggerDone();
-            return false; 
+            return false;
         }
     };
     if (!app.timer) {
@@ -113,7 +113,7 @@ function scenariosViewModel() {
   self.paginationList = ko.computed(function () {
     var list = [], listIndex = 0, displayIndex = 1;
     for (listIndex=0; listIndex < self.scenarioList().length; listIndex++) {
-      if (listIndex % self.listDisplayCount === 0) { 
+      if (listIndex % self.listDisplayCount === 0) {
         list.push({'displayIndex': 1 + (listIndex/self.listDisplayCount), 'listIndex': listIndex });
       }
     }
@@ -157,15 +157,15 @@ function scenariosViewModel() {
     var lookup_url = "/seak/id_lookup.json";
     var idLookup;
     var xhr = $.ajax({
-        url: lookup_url, 
+        url: lookup_url,
         cache: true,
-        dataType: 'json', 
-        success: function(data) { 
-            idLookup = data; 
+        dataType: 'json',
+        success: function(data) {
+            idLookup = data;
         }
     })
-    .error( function() { 
-        idLookup = null; 
+    .error( function() {
+        idLookup = null;
     });
 
     // // Call to get a raw value from a slider value
@@ -248,11 +248,11 @@ function scenariosViewModel() {
         self.showScenarioList(false);
 
         // If we're in EDIT mode, set the form values 
-        if ($('#id_input_targets').val() && 
-            $('#id_input_penalties').val() && 
-            $('#id_input_relativecosts').val() && 
-            $('#id_input_geography').val()) { 
-                
+        if ($('#id_input_targets').val() &&
+            $('#id_input_penalties').val() &&
+            $('#id_input_relativecosts').val() &&
+            $('#id_input_geography').val()) {
+ 
             // Reset to zeros 
             $.each( $('.targetvalue'), function(k, target) { $(target).val(0); });
             $.each( $('.penaltyvalue'), function(k, penalty) { $(penalty).val(0); });
@@ -287,13 +287,13 @@ function scenariosViewModel() {
             var in_targets = JSON.parse($('#id_input_targets').val());
             $.each(in_targets, function(key, val) {
                 $("#target---" + key).val(val * 100);
-                $("#targetrange---" + key).slider("value", val * 100);  
-                $("#singlerange---" + key).slider("value", val * 100); 
+                $("#targetrange---" + key).slider("value", val * 100);
+                $("#singlerange---" + key).slider("value", val * 100);
             });
             var in_penalties = JSON.parse($('#id_input_penalties').val());
             $.each(in_penalties, function(key, val) {
                 $("#penalty---" + key).val(val * 100);
-                $("#penaltyrange---" + key).slider("value", val * 100);  
+                $("#penaltyrange---" + key).slider("value", val * 100);
             });
             // end "if EDIT" mode
         } else {
@@ -338,16 +338,16 @@ function scenariosViewModel() {
                     // $.each(cfFields, function(idx, val) {
                     //     $('tr#row-' + val).removeClass('hide');
                     // });
-                    $.each($('div.accordion-group-objective'), function() { 
+                    $.each($('div.accordion-group-objective'), function() {
                         $(this).removeClass('hide');
-                        if($(this).find('tr.cf-row:not(.hide)').length === 0) { 
+                        if($(this).find('tr.cf-row:not(.hide)').length === 0) {
                             $(this).addClass('hide');
                         }
                     });
-                    $.each( $(".slider-range"), function(idx, a){ 
+                    $.each( $(".slider-range"), function(idx, a){
                         // set the value to trigger slider change event
-                        var b = $(a).slider("value"); 
-                        $(a).slider("value", b); 
+                        var b = $(a).slider("value");
+                        $(a).slider("value", b);
                     });
                     break;
             }
@@ -384,7 +384,7 @@ function scenariosViewModel() {
         $("#form-cfs tr.cf-row:not(.hide) input.penaltyvalue").each( function(index, elem) {
             var xid = $(elem).attr("id");
             var id = "#" + xid;
-            xid = xid.replace(/^penalty---/,''); 
+            xid = xid.replace(/^penalty---/,'');
             xid = xid.replace(/---$/,'');
             penalties[xid] = parseFloat($(id).val()) / 100.0;
             totalpenalties += penalties[xid];
@@ -404,7 +404,7 @@ function scenariosViewModel() {
 
         // Set the form values (note that .html() doesnt change)
         var frm = $('form#featureform');
-        $(frm).find('textarea#id_input_targets').val( JSON.stringify(targets) ); 
+        $(frm).find('textarea#id_input_targets').val( JSON.stringify(targets) );
         $(frm).find('textarea#id_input_penalties').val( JSON.stringify(penalties) );
         $(frm).find('textarea#id_input_relativecosts').val( JSON.stringify(costs) );
         // $(frm).find('textarea#id_input_geography').val( JSON.stringify(geography_fids) );
@@ -431,7 +431,7 @@ function scenariosViewModel() {
             // Submit the form
             self.formSaveComplete(false);
             self.formSaveError(false);
-            var scenario_uid; 
+            var scenario_uid;
             var jqxhr = $.ajax({
                 url: actionUrl,
                 type: "POST",
@@ -451,7 +451,7 @@ function scenariosViewModel() {
                 console.log("ERROR", errorThrown, textStatus);
                 self.formSaveError(true);
             })
-            .complete( function() { 
+            .complete( function() {
                 self.formSaveComplete(true);
             });
         }
@@ -505,7 +505,7 @@ function scenariosViewModel() {
         self.showScenarioList(true);
         self.listStart(0);
         //self.selectControl.unselectAll();
-      }  
+      }
     });
   };
 
@@ -565,7 +565,7 @@ function scenariosViewModel() {
           app.viewModel.progress.checkTimer();
         })
         .error(function() { self.reportLoadError(true); })
-        .complete(function() { 
+        .complete(function() {
             self.reportLoadComplete(true);
             //self.toggleScenarioLayer('on');
         });
@@ -623,7 +623,7 @@ function scenariosViewModel() {
             return ko.mapping.fromJS(feature.properties);
         }));
     } else {
-        self.scenarioList.removeAll(); 
+        self.scenarioList.removeAll();
     }
   };
 
@@ -658,16 +658,16 @@ function scenariosViewModel() {
         handler = function(data) { self.loadViewModel(data); };
     }
 
-    var jqhxr = $.get(url, handler) 
-    .success( function() { 
+    var jqhxr = $.get(url, handler)
+    .success( function() {
         if (scenario_uid) {
             var theScenario = self.getScenarioByUid(scenario_uid);
             self.selectScenario(theScenario);
-        } 
+        }
      })
     .error(function() { self.scenarioLoadError(true); })
-    .complete(function() { 
-        self.scenarioLoadComplete(true); 
+    .complete(function() {
+        self.scenarioLoadComplete(true);
         //$('.scenario-row').tooltip({'placement': 'right', 'animation': true});
     });
 
@@ -695,9 +695,9 @@ function scenariosViewModel() {
   self.downloadScenario = function() {
     var uids = [self.selectedFeature().uid()];
     var frm = $('form#download-array-form');
-    $(frm).find('input:checkbox').each( function(k,v) { 
-        if ($(v).attr('checked')) { 
-            uids.push( $(v).attr('value') ); 
+    $(frm).find('input:checkbox').each( function(k,v) {
+        if ($(v).attr('checked')) {
+            uids.push( $(v).attr('value') );
         }
     });
     var shpTemplate = app.workspaceUtil.actions.getByTitle("Shapefile")[0];
@@ -724,7 +724,7 @@ function scenariosViewModel() {
     .error( function(jqXHR, textStatus, errorThrown) {
         console.log("ERROR", errorThrown, textStatus);
     })
-    .complete( function() { 
+    .complete( function() {
         console.log('copy complete');
     });
     
@@ -742,7 +742,7 @@ function scenariosViewModel() {
         var d = $(data).filter('div');
         $(d).find('div.form_controls').remove();
         $("#share-form-div").empty().append(d);
-        $("a.show_members").click(function() { 
+        $("a.show_members").click(function() {
             var members = $(this).parent().find('ul.member_list');
             if(members.is(':visible')){
                 $(this).find('span').text('show members');
@@ -757,7 +757,7 @@ function scenariosViewModel() {
         $("#share-form-div").html("<div id=\"info info-alert\">Could not load share form.</div>");
         console.log("ERROR", errorThrown, textStatus);
     })
-    .complete( function() { 
+    .complete( function() {
         $("#scenario-share-dialog").modal("show");
     });
   };
@@ -766,7 +766,7 @@ function scenariosViewModel() {
     var uids = [self.selectedFeature().uid()];
     var uriTemplate = app.workspaceUtil.actions.getByTitle("Share")[0];
     var shareURL = uriTemplate.getUrl(uids);
-    var postData = $("form#share").serialize(); 
+    var postData = $("form#share").serialize();
     var jqxhr = $.ajax({
         url: shareURL,
         type: "POST",
@@ -781,7 +781,7 @@ function scenariosViewModel() {
     .error( function(jqXHR, textStatus, errorThrown) {
         console.log("ERROR", errorThrown, textStatus);
     })
-    .complete( function() { 
+    .complete( function() {
         $("#scenario-share-dialog").modal("hide");
     });
     
