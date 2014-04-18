@@ -167,10 +167,3 @@ VERBOSITY 3
                 log.warn("Check the _best.csv file .. got one with status > 1!") 
         fh.close()
         return pks
-
-    # def compile_results(self):
-    #     from seak.models import Scenario
-    #     scenario = Scenario.objects.get(id=self.scenario_id)
-    #     res = scenario.results  # cache it
-    #     return
-
