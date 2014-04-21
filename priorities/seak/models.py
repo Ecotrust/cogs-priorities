@@ -583,8 +583,8 @@ class Scenario(Analysis):
         scaled_costs = {}
         all_costs = Cost.objects.all()
         scaled_breaks = {}
+        print "\tLooping through costs"
         for costslug, weight in cost_weights.items():
-            print costslug, weight
 
             # TODO: Remove this when reporting on all costs
             if weight <= 0:
@@ -1012,11 +1012,11 @@ class Scenario(Analysis):
                                 </Rule>
                                 <Rule>
                                     <Filter>([hits] &gt; 0)</Filter>
-                                    <PolygonSymbolizer fill="#f1eef6" fill-opacity="1.0" />
+                                    <PolygonSymbolizer fill="#e1eee6" fill-opacity="1.0" />
                                 </Rule>
                                 <Rule>
                                     <Filter>([hits] = 0)</Filter>
-                                    <PolygonSymbolizer fill="#ffffff" fill-opacity="0.0" />
+                                    <PolygonSymbolizer fill="#ffffff" fill-opacity="1.0" />
                                 </Rule>
                             
                     </Style>
@@ -1025,8 +1025,8 @@ class Scenario(Analysis):
                             <Filter>([bests] &gt;= 1)</Filter>
                             <!--
                             <LineSymbolizer stroke="#000000" stroke-width="0.5" stroke-opacity="1" stroke-linejoin="round" />
-                            -->
                             <PointSymbolizer/> 
+                            -->
                         </Rule>
                     </Style>
                     <Layer name="layer" srs="&google_mercator;">
