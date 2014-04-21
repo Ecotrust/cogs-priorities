@@ -640,7 +640,10 @@ class Scenario(Analysis):
                 else: 
                     summed_costs[cname] = raw_costs[cname]
 
-            auxs = dict([(x.aux.name, x.value) for x in pu.puvsaux_set.all()])
+            if settings.SHOW_AUX:
+                auxs = dict([(x.aux.name, x.value) for x in pu.puvsaux_set.all()])
+            else:
+                auxs = {}
 
             best.append({'name': pu.name, 
                          'fid': pu.fid, 
