@@ -287,7 +287,7 @@ td.pu-show, th.pu-show {
 thead.pu-show {
     position: relative;
     display: block;
-    border-bottom: 2px solid lightGrey;
+    border-bottom: 2px solid #CCCCCC;
 }
 
 tbody.pu-show {
@@ -305,4 +305,8 @@ tbody.pu-show {
 
 .old_ie_wrapper tbody { 
     height: auto; 
+}
+
+.label-danger, .badge-danger {
+    background-color: #e74c3c;
 }
