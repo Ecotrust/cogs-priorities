@@ -584,8 +584,12 @@ class Scenario(Analysis):
         all_costs = Cost.objects.all()
         scaled_breaks = {}
         for costslug, weight in cost_weights.items():
+            print costslug, weight
+
+            # TODO: Remove this when reporting on all costs
             if weight <= 0:
                 continue
+
             try:
                 cost = [x for x in all_costs if x.slug == costslug][0] 
             except IndexError:
@@ -606,6 +610,8 @@ class Scenario(Analysis):
             scaled_breaks[costslug] = get_jenks_breaks(scaled_values, 3)
 
         sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid') if x.slug in scaled_costs.keys()]
+        # TODO: report on ALL costs
+        # sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid')]
         
         # TODO: Optimize this loop, can take several seconds
         print "\tbestpus"
