@@ -112,7 +112,7 @@
       "themes": [
         1
       ],
-      "default_on": false,
+      "default_on": true,
       "map_tiles": "",
       "compress_display": false,
       "legend_subtitle": "",

@@ -27,7 +27,7 @@ domain=rohu
 gallus
 
 [prod:vars]
-remote_user=mperry
+remote_user=ubuntu
 manage_with_git=true
 git_branch=rastertile
 debug=False
