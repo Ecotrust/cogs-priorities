@@ -544,6 +544,17 @@ class Scenario(Analysis):
         }
         return json.dumps(serializable)
 
+    @cachemethod("consfeat_dict")
+    def consfeat_dict(self):
+        #consfeats = dict([(x.pk, x.__dict__) for x in ConservationFeature.objects.prefetch_related('puvscf_set')])
+        consfeats = []
+        for cf in ConservationFeature.objects.prefetch_related('puvscf_set'):
+            dd = cf.__dict__
+            dd['amount'] = sum([x.amount for x in cf.puvscf_set.all() if x.amount])
+            del dd['_prefetched_objects_cache']
+            consfeats.append((cf.pk, dd))
+        return dict(consfeats)
+        
     @property
     @cachemethod("seak_scenario_%(id)s_results")
     def results(self):
@@ -616,17 +627,12 @@ class Scenario(Analysis):
         
         print "\tbestpus"
         summed_costs = {}
-        # import time
-        # start = time.time()
-        # loopy = 0
+
         for pu in bestpus:
             centroid = pu.centroid 
             costs = []
 
-            # a = time.time()
             raw_costs = dict([(x.cost.slug, x.amount) for x in pu.puvscost_set.all()])
-            # loopy += time.time() - a
-            #import ipdb; ipdb.set_trace()
 
             for cname in sorted_cost_keys:
                 pucosts = scaled_costs[cname]
@@ -659,40 +665,35 @@ class Scenario(Analysis):
                          'centroidx': centroid[0],
                          'centroidy': centroid[1]})
 
-        #print "\t\t", time.time() - start, "(%s in loop)" % loopy, loopy / len(bestpus)
         sum_area = sum([x.area for x in bestpus])
 
-        # Parse mvbest
         print "\tparse mvbest"
-        # TODO: Optimize this loop, can take several seconds
         fh = open(os.path.join(self.outdir, "output", "seak_mvbest.csv"), 'r')
         lines = [x.strip().split(',') for x in fh.readlines()[1:]]
         fh.close()
         species = []
         num_target_species = 0
         num_met = 0
-        import time
-        start = time.time()
-        consfeats = dict([(x.pk, x) for x in ConservationFeature.objects.prefetch_related('puvscf_set')])
+        consfeats = self.consfeat_dict()
         for line in lines:
             sid = int(line[0])
             try:
-                #consfeat = ConservationFeature.objects.filter(pk=sid).prefetch_related('puvscf_set')[0]
                 consfeat = consfeats[sid]
             except ConservationFeature.DoesNotExist:
                 logger.error("ConservationFeature %s doesn't exist; refers to an old scenario?" % sid)
                 continue
-            sname = consfeat.name
-            sunits = consfeat.units
-            slevel1 = consfeat.level1
-            scode = consfeat.dbf_fieldname
+
+            sname = consfeat["name"]
+            sunits = consfeat["units"]
+            slevel1 = consfeat["level1"]
+            scode = consfeat["dbf_fieldname"]
             starget = float(line[2])
             try:
-                starget_prop = species_level_targets[consfeat.pk]
+                starget_prop = species_level_targets[sid]
             except KeyError:
                 continue
             sheld = float(line[3])
-            stotal = sum([x.amount for x in consfeat.puvscf_set.all() if x.amount])
+            stotal =  consfeat['amount'] #sum([x.amount for x in consfeat.puvscf_set.all() if x.amount])
             try:
                 spcttotal = sheld/stotal 
             except ZeroDivisionError:
@@ -711,8 +712,6 @@ class Scenario(Analysis):
             if starget > 0:
                 num_target_species += 1
 
-        print "\t\t", time.time() - start, "seconds"
-        print "\tfinal steps"
         species.sort(key=lambda k:k['name'].lower())
 
         costs = {}
