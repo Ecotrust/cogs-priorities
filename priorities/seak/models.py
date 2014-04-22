@@ -570,7 +570,8 @@ class Scenario(Analysis):
 
         bestjson = json.loads(self.output_best)
         bestpks = [int(x) for x in bestjson['best']]
-        bestpus = PlanningUnit.objects.select_related().filter(pk__in=bestpks).order_by('name')
+        bestpus = PlanningUnit.objects.filter(pk__in=bestpks).order_by('name').prefetch_related('puvscost_set', 'puvscost_set__cost')
+
         #potentialpus = PlanningUnit.objects.filter(fid__in=geography)
         potentialpus = PlanningUnit.objects.all()
         bbox = None
@@ -596,7 +597,7 @@ class Scenario(Analysis):
                 continue
 
             all_selected = PuVsCost.objects.select_related().filter(cost=cost, pu__in=bestpus)
-            all_potential = PuVsCost.objects.select_related().filter(cost=cost, pu__in=potentialpus)
+            all_potential = PuVsCost.objects.select_related().filter(cost=cost) #, pu__in=potentialpus)
 
             vals = [x.amount for x in all_potential]
             fids = [x.pu.fid for x in all_potential]
@@ -613,13 +614,19 @@ class Scenario(Analysis):
         # TODO: report on ALL costs
         # sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid')]
         
-        # TODO: Optimize this loop, can take several seconds
         print "\tbestpus"
         summed_costs = {}
+        # import time
+        # start = time.time()
+        # loopy = 0
         for pu in bestpus:
             centroid = pu.centroid 
             costs = []
+
+            # a = time.time()
             raw_costs = dict([(x.cost.slug, x.amount) for x in pu.puvscost_set.all()])
+            # loopy += time.time() - a
+            #import ipdb; ipdb.set_trace()
 
             for cname in sorted_cost_keys:
                 pucosts = scaled_costs[cname]
@@ -652,6 +659,7 @@ class Scenario(Analysis):
                          'centroidx': centroid[0],
                          'centroidy': centroid[1]})
 
+        #print "\t\t", time.time() - start, "(%s in loop)" % loopy, loopy / len(bestpus)
         sum_area = sum([x.area for x in bestpus])
 
         # Parse mvbest
@@ -663,10 +671,12 @@ class Scenario(Analysis):
         species = []
         num_target_species = 0
         num_met = 0
+        import time
+        start = time.time()
         for line in lines:
             sid = int(line[0])
             try:
-                consfeat = ConservationFeature.objects.get(pk=sid)
+                consfeat = ConservationFeature.objects.filter(pk=sid).prefetch_related('puvscf_set')[0]
             except ConservationFeature.DoesNotExist:
                 logger.error("ConservationFeature %s doesn't exist; refers to an old scenario?" % sid)
                 continue
@@ -680,7 +690,7 @@ class Scenario(Analysis):
             except KeyError:
                 continue
             sheld = float(line[3])
-            stotal = sum([x.amount for x in consfeat.puvscf_set.filter(pu__in=potentialpus) if x.amount])
+            stotal = sum([x.amount for x in consfeat.puvscf_set.all() if x.amount])
             try:
                 spcttotal = sheld/stotal 
             except ZeroDivisionError:
@@ -699,6 +709,8 @@ class Scenario(Analysis):
             if starget > 0:
                 num_target_species += 1
 
+        print "\t\t", time.time() - start, "seconds"
+        print "\tfinal steps"
         species.sort(key=lambda k:k['name'].lower())
 
         costs = {}
