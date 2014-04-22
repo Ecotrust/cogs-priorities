@@ -562,7 +562,6 @@ class Scenario(Analysis):
         targets = json.loads(self.input_targets)
         penalties = json.loads(self.input_penalties)
         cost_weights = json.loads(self.input_relativecosts)
-        #geography = json.loads(self.input_geography)
 
         print "\tTarget and Penalties"
         targets_penalties = {}
@@ -583,7 +582,6 @@ class Scenario(Analysis):
         bestpks = [int(x) for x in bestjson['best']]
         bestpus = PlanningUnit.objects.filter(pk__in=bestpks).order_by('name').prefetch_related('puvscost_set', 'puvscost_set__cost')
 
-        #potentialpus = PlanningUnit.objects.filter(fid__in=geography)
         potentialpus = PlanningUnit.objects.all()
         bbox = None
         if bestpus:
@@ -596,10 +594,15 @@ class Scenario(Analysis):
         all_costs = Cost.objects.all()
         scaled_breaks = {}
         print "\tLooping through costs"
-        for costslug, weight in cost_weights.items():
 
-            # TODO: Remove this when reporting on all costs
-            if weight <= 0:
+        import time
+        start = time.time()
+
+        fids = [x.fid for x in PlanningUnit.objects.all()]
+        fids_selected = [x.fid for x in bestpus]
+
+        for costslug, weight in cost_weights.items():
+            if weight <= 0 and not settings.SHOW_ALL_COSTS:
                 continue
 
             try:
@@ -607,13 +610,10 @@ class Scenario(Analysis):
             except IndexError:
                 continue
 
-            all_selected = PuVsCost.objects.select_related().filter(cost=cost, pu__in=bestpus)
-            all_potential = PuVsCost.objects.select_related().filter(cost=cost) #, pu__in=potentialpus)
-
+            print costslug
+            all_potential = PuVsCost.objects.filter(cost=cost) #, pu__in=potentialpus)
             vals = [x.amount for x in all_potential]
-            fids = [x.pu.fid for x in all_potential]
-            fids_selected = [x.pu.fid for x in all_selected]
-
+                       
             scaled_values = [int(x) for x in scale_list(vals, floor=0.0)]
             pucosts_potential = dict(zip(fids, scaled_values))
             extract = lambda x, y: dict(zip(x, map(y.get, x)))
@@ -621,9 +621,12 @@ class Scenario(Analysis):
             scaled_costs[costslug] = pucosts
             scaled_breaks[costslug] = get_jenks_breaks(scaled_values, 3)
 
-        sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid') if x.slug in scaled_costs.keys()]
-        # TODO: report on ALL costs
-        # sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid')]
+        print "\t\t", time.time() - start, "seconds"
+
+        if not settings.SHOW_ALL_COSTS:
+            sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid') if x.slug in scaled_costs.keys()]
+        else:
+            sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid')]
         
         print "\tbestpus"
         summed_costs = {}
@@ -693,7 +696,7 @@ class Scenario(Analysis):
             except KeyError:
                 continue
             sheld = float(line[3])
-            stotal =  consfeat['amount'] #sum([x.amount for x in consfeat.puvscf_set.all() if x.amount])
+            stotal = consfeat['amount']
             try:
                 spcttotal = sheld/stotal 
             except ZeroDivisionError:

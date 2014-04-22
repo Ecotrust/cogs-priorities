@@ -121,6 +121,7 @@ SLIDER_SHOW_PROPORTION = True
 SLIDER_START_COLLAPSED = True
 VARIABLE_GEOGRAPHY = False # do we allow variable geographies (True) or just use all planning units (False)?
 SHOW_RAW_COSTS = False # in report
+SHOW_ALL_COSTS = False # in report
 SHOW_AUX = False # in report
 SHOW_GOAL_MET = True # in report
 
