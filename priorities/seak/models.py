@@ -673,10 +673,12 @@ class Scenario(Analysis):
         num_met = 0
         import time
         start = time.time()
+        consfeats = dict([(x.pk, x) for x in ConservationFeature.objects.prefetch_related('puvscf_set')])
         for line in lines:
             sid = int(line[0])
             try:
-                consfeat = ConservationFeature.objects.filter(pk=sid).prefetch_related('puvscf_set')[0]
+                #consfeat = ConservationFeature.objects.filter(pk=sid).prefetch_related('puvscf_set')[0]
+                consfeat = consfeats[sid]
             except ConservationFeature.DoesNotExist:
                 logger.error("ConservationFeature %s doesn't exist; refers to an old scenario?" % sid)
                 continue
