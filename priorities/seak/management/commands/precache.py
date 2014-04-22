@@ -10,10 +10,6 @@ class Command(BaseCommand):
         from django.test.client import RequestFactory
         from madrona.layer_manager.views import get_json 
 
-        print "Caching the planning_units.geojson response..."
-        request = RequestFactory().get('/seak/planning_units.geojson')
-        planning_units_geojson(request)
-
         print "Caching the layer_manager response..."
         request = RequestFactory().get('/layer_manager/layers.json')
         get_json(request)
@@ -38,14 +34,14 @@ class Command(BaseCommand):
 
         tilecfg = os.path.abspath(os.path.join(os.path.dirname(__file__),'..','..','..','..','tile_config','tiles.cfg'))
         for layer in layers:
-            cmd = "tilestache-seed.py -c %s -l %s -e %s -b %s %s" % (tilecfg, layer[0], layer[1], extent, ' '.join(zooms[:-2]))
+            cmd = "tilestache-seed.py -c %s -l %s -e %s -b %s %s" % (tilecfg, layer[0], layer[1], extent, ' '.join(zooms[:4]))
             print cmd
             os.popen(cmd)
 
         layers.extend([(x.dbf_fieldname, 'png') for x in Cost.objects.all()])
         layers.extend([(x.dbf_fieldname, 'png') for x in ConservationFeature.objects.all()])
 
-        for z in zooms[:2]: # cache first two zoom levels only
+        for z in zooms[:4]: # cache first zoom levels only
             for layer in layers:
                 cmd = "tilestache-seed.py -c %s -l %s -e %s -b %s %s" % (tilecfg, layer[0], layer[1], extent, z)
                 print cmd
