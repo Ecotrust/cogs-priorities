@@ -969,7 +969,7 @@ class Scenario(Analysis):
             try:
                 hits = pucount[str(pu.fid)] 
             except KeyError:
-                continue  # don't bother if never hit
+                hits = 0
 
             if pu.fid in bests:
                 best = 1
