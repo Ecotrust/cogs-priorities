@@ -137,7 +137,7 @@ LOGGING = {
         'django.db.backends': {
             'handlers':['rotatefile'],
             'propagate': False,
-            'level':'INFO',
+            'level':'DEBUG',
         },
         'madrona.models': {
             'handlers':['rotatefile'],
