@@ -375,7 +375,6 @@ class Scenario(Analysis):
         self.invalidate_cache()
 
         # create the target and penalties
-        logger.debug("Create targets and penalties")
         targets = self.process_dict(json.loads(self.input_targets))
         penalties = self.process_dict(json.loads(self.input_penalties))
         cost_weights = json.loads(self.input_relativecosts)
@@ -403,7 +402,7 @@ class Scenario(Analysis):
             self.input_scalefactor = 0.5
 
         # Apply the target and penalties
-        logger.debug("Apply the targets and penalties")
+        logger.debug("Creating the MarxanAnalysis object")
         cfs = []
 
         if settings.VARIABLE_GEOGRAPHY:
@@ -461,10 +460,9 @@ class Scenario(Analysis):
         final_costs = [1.0 if x < 1.0 else x for x in final_costs] # enforce a minimum cost of 1.0
         pucosts = zip(pus, final_costs)
 
-        logger.debug("Creating the MarxanAnalysis object")
         m = MarxanAnalysis(pucosts, cfs, self.outdir, self.id)
 
-        logger.debug("Firing off the process")
+        logger.debug("Firing off the marxan process")
         check_status_or_begin(marxan_start, task_args=(m,), polling_url=self.get_absolute_url())
         self.process_output()
         return True
@@ -558,12 +556,10 @@ class Scenario(Analysis):
     @property
     @cachemethod("seak_scenario_%(id)s_results")
     def results(self):
-        print "#### Starting results..."
         targets = json.loads(self.input_targets)
         penalties = json.loads(self.input_penalties)
         cost_weights = json.loads(self.input_relativecosts)
 
-        print "\tTarget and Penalties"
         targets_penalties = {}
         for k, v in targets.items():
             targets_penalties[k] = {'label': k.replace('---', ' > ').replace('-',' ').title(), 'target': v, 'penalty': None}
@@ -578,6 +574,7 @@ class Scenario(Analysis):
         if not self.done:
             return {'targets_penalties': targets_penalties, 'costs': cost_weights}
 
+        logger.debug("Calculating results for %s" % self.uid)
         bestjson = json.loads(self.output_best)
         bestpks = [int(x) for x in bestjson['best']]
         bestpus = PlanningUnit.objects.filter(pk__in=bestpks).order_by('name').prefetch_related('puvscost_set', 'puvscost_set__cost')
@@ -587,16 +584,10 @@ class Scenario(Analysis):
         if bestpus:
             bbox = potentialpus.extent()
         best = []
-        logger.debug("looping through bestpus queryset")
 
-        print "\tScaling costs"
         scaled_costs = {}
         all_costs = Cost.objects.all()
         scaled_breaks = {}
-        print "\tLooping through costs"
-
-        import time
-        start = time.time()
 
         fids = [x.fid for x in PlanningUnit.objects.all()]
         fids_selected = [x.fid for x in bestpus]
@@ -610,7 +601,6 @@ class Scenario(Analysis):
             except IndexError:
                 continue
 
-            print costslug
             all_potential = PuVsCost.objects.filter(cost=cost) #, pu__in=potentialpus)
             vals = [x.amount for x in all_potential]
                        
@@ -621,14 +611,11 @@ class Scenario(Analysis):
             scaled_costs[costslug] = pucosts
             scaled_breaks[costslug] = get_jenks_breaks(scaled_values, 3)
 
-        print "\t\t", time.time() - start, "seconds"
-
         if not settings.SHOW_ALL_COSTS:
             sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid') if x.slug in scaled_costs.keys()]
         else:
             sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid')]
         
-        print "\tbestpus"
         summed_costs = {}
 
         for pu in bestpus:
@@ -670,7 +657,6 @@ class Scenario(Analysis):
 
         sum_area = sum([x.area for x in bestpus])
 
-        print "\tparse mvbest"
         fh = open(os.path.join(self.outdir, "output", "seak_mvbest.csv"), 'r')
         lines = [x.strip().split(',') for x in fh.readlines()[1:]]
         fh.close()
@@ -737,6 +723,7 @@ class Scenario(Analysis):
         }
 
         # trigger caching of hit maps
+        logger.debug("Trigger caching of scenario maps")
         self.thunderstorm_sql()
         self.mapnik_xml()
 
@@ -1044,8 +1031,8 @@ class Scenario(Analysis):
                             <Filter>([bests] &gt;= 1)</Filter>
                             <!--
                             <LineSymbolizer stroke="#000000" stroke-width="0.5" stroke-opacity="1" stroke-linejoin="round" />
-                            <PointSymbolizer/> 
                             -->
+                            <PointSymbolizer/> 
                         </Rule>
                     </Style>
                     <Layer name="layer" srs="&google_mercator;">

@@ -59,7 +59,7 @@ MARXAN_BIN =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'ma
 MARXAN_OUTDIR =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_output'))
 MARXAN_TEMPLATEDIR = os.path.join(MARXAN_OUTDIR, 'template')
 MARXAN_NUMREPS = 20
-MARXAN_NUMITNS = 800000
+MARXAN_NUMITNS = 750000
 
 LOG_FILE = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'logs', 'seak.log'))
 MEDIA_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'mediaroot'))
@@ -111,9 +111,50 @@ import djcelery
 djcelery.setup_loader()
 
 import logging
-LOG_LEVEL = logging.INFO
-dblogger = logging.getLogger('django.db.backends')
-dblogger.setLevel(logging.INFO)
+logging.getLogger('django.db.backends').setLevel(logging.INFO)
+logging.getLogger('django.db.backends').setLevel(logging.ERROR)
+
+# settings.py
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        },
+    },
+    'handlers': {
+        'rotatefile': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': LOG_FILE,
+            'maxBytes': 1024*1024*5, # 5 MB
+            'backupCount': 5,
+            'formatter':'standard',
+        }, 
+    },
+    'loggers': {
+        'django.db.backends': {
+            'handlers':['rotatefile'],
+            'propagate': False,
+            'level':'INFO',
+        },
+        'madrona.models': {
+            'handlers':['rotatefile'],
+            'propagate': False,
+            'level':'INFO',
+        },
+        'seak.models': {
+            'handlers':['rotatefile'],
+            'propagate': False,
+            'level':'DEBUG',
+        },
+        '': {
+            'handlers': ['rotatefile'],
+            'level': 'WARNING',
+        },
+    }
+}
 
 SLIDER_MODE = "single" # 'dual' OR 'single'
 SLIDER_SHOW_RAW = False

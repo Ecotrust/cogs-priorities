@@ -1,0 +1,13 @@
+Here be the django application logs.
+
+For other logs, check:
+
+celery
+/var/log/celeryd-cogs-priorities.log
+
+uwsgi
+/var/log/uwsgi/app/cogs-priorities.log
+
+nginx
+/var/log/nginx/cogs-priorities.access.log
+/var/log/nginx/cogs-priorities.error.log
