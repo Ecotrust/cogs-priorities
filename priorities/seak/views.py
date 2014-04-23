@@ -199,9 +199,6 @@ _pathinfo_pat = re.compile(r'^/?(?P<l>\w.+)/(?P<z>\d+)/(?P<x>-?\d+)/(?P<y>-?\d+)
 
 def scenario_tile(request, instance):
 
-    # print "############ invalidate cache"
-    # instance.invalidate_cache()
-
     path_info = "/" + instance.uid + "_tiles" + request.GET.get('tile')
 
     if not path_info:

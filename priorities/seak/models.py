@@ -1086,7 +1086,7 @@ class Scenario(Analysis):
                 select='single multiple',
                 type='application/zip',
             ),
-            alternate('Input Files',
+            alternate('Marxan Inputs',
                 'seak.views.watershed_marxan',
                 select='single',
                 type='application/zip',

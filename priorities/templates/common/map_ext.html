@@ -154,6 +154,14 @@
                                                 <i class="icon-tags"></i> Copy </a>
                                                 <a href="#" class="btn btn-mini" data-bind="click: $parent.showDownloadDialog">
                                                 <i class="icon-download-alt"></i> Download</a>
+
+                                                {% if user.is_staff %}
+                                                <a href="#" 
+                                                data-bind="attr: { href:'/features/scenario/links/marxan-inputs/' + uid() }"
+                                                class="btn btn-mini">
+                                                <i class="icon-download-alt"></i> Marxan Files</a>
+                                                {% endif %}
+
                                                 <a href="#" class="btn btn-mini" data-bind="click: $parent.showShareDialog">
                                                 <i class="icon-share-alt"></i> Share</a>
                                                 <a href="#" class="btn btn-mini" data-bind="click: $parent.showDeleteDialog">
