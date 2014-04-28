@@ -982,35 +982,35 @@ class Scenario(Analysis):
                         
                                 <Rule>
                                     <Filter>([hits] &gt;= 18)</Filter>
-                                    <PolygonSymbolizer fill="#0c2c84" fill-opacity="1.0" />
+                                    <PolygonSymbolizer fill="#0c2c84" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
                                     <Filter>([hits] &gt;= 15)</Filter>
-                                    <PolygonSymbolizer fill="#225ea8" fill-opacity="1.0" />
+                                    <PolygonSymbolizer fill="#225ea8" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
                                     <Filter>([hits] &gt;= 12)</Filter>
-                                    <PolygonSymbolizer fill="#1d91c0" fill-opacity="1.0" />
+                                    <PolygonSymbolizer fill="#1d91c0" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
                                     <Filter>([hits] &gt;= 10)</Filter>
-                                    <PolygonSymbolizer fill="#41b6c4" fill-opacity="1.0" />
+                                    <PolygonSymbolizer fill="#41b6c4" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
                                     <Filter>([hits] &gt;= 8)</Filter>
-                                    <PolygonSymbolizer fill="#7fcdbb" fill-opacity="1.0" />
+                                    <PolygonSymbolizer fill="#7fcdbb" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
                                     <Filter>([hits] &gt;= 4)</Filter>
-                                    <PolygonSymbolizer fill="#c7e9b4" fill-opacity="1.0" />
+                                    <PolygonSymbolizer fill="#c7e9b4" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
                                     <Filter>([hits] &gt;= 1)</Filter>
-                                    <PolygonSymbolizer fill="#ffffcc" fill-opacity="1.0" />
+                                    <PolygonSymbolizer fill="#ffffcc" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
                                     <Filter>([hits] = 0)</Filter>
-                                    <PolygonSymbolizer fill="#ffffff" fill-opacity="1.0" />
+                                    <PolygonSymbolizer fill="#ffffff" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                             
                     </Style>
@@ -1021,7 +1021,7 @@ class Scenario(Analysis):
                             <LineSymbolizer stroke="#000000" stroke-width="0.5" stroke-opacity="1" stroke-linejoin="round" />
                             <PointSymbolizer/> 
                             -->
-                            <PolygonSymbolizer fill="#081d58" fill-opacity="1.0" />
+                            <PolygonSymbolizer fill="#081d58" fill-opacity="1.0" gamma=".45" />
                         </Rule>
                     </Style>
                     <Layer name="layer" srs="&google_mercator;">
