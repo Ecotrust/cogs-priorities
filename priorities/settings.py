@@ -74,28 +74,35 @@ TEMPLATE_DEBUG = False
 LOGIN_REDIRECT_URL = '/'
 HELP_EMAIL = 'ksdev@ecotrust.org'
 
+#######################################
+# IMPORTANT
+# One redis database for everything, unique to this app
+# Must NOT conflict with other apps on this server
+#######################################
+APP_REDIS_DB = 5
+
 # Use redis_sessions 
 SESSION_ENGINE = 'redis_sessions.session'
 SESSION_REDIS_HOST = 'localhost'
 SESSION_REDIS_PORT = 6379
-SESSION_REDIS_DB = 0
+SESSION_REDIS_DB = APP_REDIS_DB
 SESSION_REDIS_PREFIX = 'priorities-session'
 
 # Redis for caching
 CACHES = {
     "default": {
         "BACKEND": "redis_cache.cache.RedisCache",
-        "LOCATION": "127.0.0.1:6379:2",
+        "LOCATION": "127.0.0.1:6379:%d" % APP_REDIS_DB,
         "OPTIONS": {
             "CLIENT_CLASS": "redis_cache.client.DefaultClient",
-        }
+        ""}
     }
 }
 
 # Redis for celery
-BROKER_URL = 'redis://localhost:6379/3'
+BROKER_URL = 'redis://localhost:6379/%d' % APP_REDIS_DB
 BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 43200}  # 12 hours
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/4'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/%d' % APP_REDIS_DB
 CELERY_ALWAYS_EAGER = False
 CELERY_DISABLE_RATE_LIMITS = True
 from datetime import timedelta

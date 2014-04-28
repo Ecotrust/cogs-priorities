@@ -27,7 +27,7 @@ import redis
 logger = get_logger()
 
 # connection must match the cache set in scenario_tiles view
-redisconn = redis.Redis(host='localhost', port=6379, db=1)
+redisconn = redis.Redis(host='localhost', port=6379, db=settings.APP_REDIS_DB)
 
 def cachemethod(cache_key, timeout=60*60*24*365):
     '''

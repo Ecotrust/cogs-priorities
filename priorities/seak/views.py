@@ -228,7 +228,7 @@ def scenario_tile(request, instance):
       "cache": {
         "host": "localhost", 
         "name": "Redis", 
-        "db": 1,
+        "db": settings.APP_REDIS_DB,
         "port": 6379
       }, 
       # "cache": {
