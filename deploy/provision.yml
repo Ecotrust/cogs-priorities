@@ -118,7 +118,7 @@
         - deploy
 
     - name: go script
-      template: src=templates/go.j2 dest=/home/{{ remote_user }}/go owner={{ remote_user }} group={{ remote_user }} mode=0755
+      template: src=templates/go.j2 dest=/home/{{ remote_user }}/go_{{ app_name }} owner={{ remote_user }} group={{ remote_user }} mode=0755
 
     - name: settings local
       tags:
@@ -215,14 +215,17 @@
     - name: remove default site
       file: path=/etc/nginx/sites-enabled/default state=absent
 
+    - name: log file permissions
+      file: path={{ project_path }}/logs/seak.log state=file owner={{ webuser }} group={{ remote_user }} mode=0775
+
     - name: stupid uwsgi hack
       file: path=/usr/lib/uwsgi/plugins state=directory
 
     - name: marxan_output writable by remote_user (celery)
-      file: path={{ project_path }}/marxan_output owner={{ remote_user }} state=directory mode=755
+      file: path={{ project_path }}/marxan_output owner={{ webuser }} group={{ remote_user }} state=directory mode=775
 
     - name: template dir writable
-      file: path={{ project_path }}/marxan_output/template owner={{ remote_user }} state=directory mode=755
+      file: path={{ project_path }}/marxan_output/template owner={{ webuser }} group={{ remote_user }} state=directory mode=775
 
     - name: uwsgi init script to use venv version of uwsgi
       notify: restart uwsgi

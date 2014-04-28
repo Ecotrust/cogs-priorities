@@ -1,6 +1,6 @@
 geo $maintenance_ip {
     default 0;
-    127.0.0.1/24    1;  # TODO replace with your internal IP block
+    192.168.50.139    1;  # TODO replace with your internal IP block
 }
 
 server {
@@ -24,7 +24,7 @@ server {
     if ($maintenance_ip = 0) {
         set $maintenance y;
     }
-    if (-f /tmp/.maintenance_mode) {
+    if (-f /tmp/.maintenance_mode_{{ app_name }}) {
         set $maintenance y$maintenance;
     }
     if ($maintenance = yy) {
