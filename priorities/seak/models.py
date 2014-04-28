@@ -972,6 +972,15 @@ class Scenario(Analysis):
 
         if not os.path.exists(path):
             dbs = settings.DATABASES['default']
+            context = dbs.copy()
+            context['sql'] = sql
+            context['a'] = settings.MARXAN_NUMREPS - 2
+            context['b'] = round(settings.MARXAN_NUMREPS * 0.7)
+            context['c'] = round(settings.MARXAN_NUMREPS * 0.5)
+            context['d'] = round(settings.MARXAN_NUMREPS * 0.4)
+            context['e'] = round(settings.MARXAN_NUMREPS * 0.3)
+            context['f'] = round(settings.MARXAN_NUMREPS * 0.2)
+
             with open(path, 'w') as fh:
                 xml = """<?xml version="1.0"?>
                 <!DOCTYPE Map [
@@ -981,27 +990,27 @@ class Scenario(Analysis):
                     <Style name="pu" filter-mode="first">
                         
                                 <Rule>
-                                    <Filter>([hits] &gt;= 18)</Filter>
+                                    <Filter>([hits] &gt;= %(a)s)</Filter>
                                     <PolygonSymbolizer fill="#0c2c84" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
-                                    <Filter>([hits] &gt;= 15)</Filter>
+                                    <Filter>([hits] &gt;= %(b)s)</Filter>
                                     <PolygonSymbolizer fill="#225ea8" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
-                                    <Filter>([hits] &gt;= 12)</Filter>
+                                    <Filter>([hits] &gt;= %(c)s)</Filter>
                                     <PolygonSymbolizer fill="#1d91c0" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
-                                    <Filter>([hits] &gt;= 10)</Filter>
+                                    <Filter>([hits] &gt;= %(d)s)</Filter>
                                     <PolygonSymbolizer fill="#41b6c4" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
-                                    <Filter>([hits] &gt;= 8)</Filter>
+                                    <Filter>([hits] &gt;= %(e)s)</Filter>
                                     <PolygonSymbolizer fill="#7fcdbb" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
-                                    <Filter>([hits] &gt;= 4)</Filter>
+                                    <Filter>([hits] &gt;= %(f)s)</Filter>
                                     <PolygonSymbolizer fill="#c7e9b4" fill-opacity="1.0" gamma=".45" />
                                 </Rule>
                                 <Rule>
@@ -1030,15 +1039,15 @@ class Scenario(Analysis):
 
                         <Datasource>
                             <Parameter name="type">postgis</Parameter>
-                            <Parameter name="host">%s</Parameter>
-                            <Parameter name="dbname">%s</Parameter>
-                            <Parameter name="user">%s</Parameter>      
-                            <Parameter name="password">%s</Parameter>
-                            <Parameter name="table">%s</Parameter>
+                            <Parameter name="host">%(HOST)s</Parameter>
+                            <Parameter name="dbname">%(NAME)s</Parameter>
+                            <Parameter name="user">%(USER)s</Parameter>
+                            <Parameter name="password">%(PASSWORD)s</Parameter>
+                            <Parameter name="table">%(sql)s</Parameter>
                             <Parameter name="estimate_extent">false</Parameter>
                         </Datasource>
                     </Layer>
-                </Map>""" % (dbs['HOST'], dbs['NAME'], dbs['USER'], dbs['PASSWORD'], sql)
+                </Map>""" % context
 
                 fh.write(xml)
 
