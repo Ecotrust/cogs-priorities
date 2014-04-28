@@ -18,10 +18,4 @@ STATIC_URL = '/media/'
 DEBUG = {{ debug }}
 TEMPLATE_DEBUG = {{ debug }} 
 
-ADMINS = (('Madrona', 'madrona@ecotrust.org'),)
-
-import logging
-logging.getLogger('django.db.backends').setLevel(logging.ERROR)
-import os
-
-LOG_FILE = os.path.join(os.path.dirname(__file__),'..','seak.log')
+ADMINS = (('Matt Perry', 'mperry@ecotrust.org'),)

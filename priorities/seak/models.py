@@ -489,24 +489,12 @@ class Scenario(Analysis):
 
         repsdone = len(outputs)
 
-        # compile_proportion = 0.15
-        # compile_int = int(compile_proportion * numreps)
-
-        # key = "seak_scenario_%s_results" % self.id
-        # if cache.get(key):
-        #     repsdone += compile_int
-
-        # return (repsdone, numreps + compile_int)
         return (repsdone, numreps)
 
     def geojson(self, srid=None):
         # Note: no reprojection support here 
         rs = self.results
-        # if 'units' in rs:
-        #     selected_fids = [r['fid'] for r in rs['units']]
-        # else:
-        #     selected_fids = []
-        
+
         if 'bbox' in rs: 
             bbox = rs['bbox']
         else:
