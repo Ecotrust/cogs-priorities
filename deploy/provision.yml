@@ -20,7 +20,7 @@
     - name: go into maintenance mode
       notify:
         - turn off maintenance mode
-      command: "touch /tmp/.maintenance_mode"
+      command: "touch /tmp/.maintenance_mode_{{ app_name }}"
 
     - name: Get aptitude for upgrade
       tags:
@@ -304,4 +304,4 @@
       command: "{{ manage }} precache"
 
     - name: turn off maintenance mode
-      command: "rm /tmp/.maintenance_mode"
+      command: "rm /tmp/.maintenance_mode_{{ app_name }}"
