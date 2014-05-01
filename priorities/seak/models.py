@@ -464,7 +464,7 @@ class Scenario(Analysis):
 
         logger.debug("Firing off the marxan process")
         check_status_or_begin(marxan_start, task_args=(m,), polling_url=self.get_absolute_url())
-        self.process_output()
+        # self.process_output()
         return True
 
     @property
