@@ -163,7 +163,7 @@ function init_map() {
                 $("#info").show();
             }
         });
-        $("#info-title").html("<h4>" + puname + "</h4>");
+        $("#info-title").html("<h4>" + puname.replace("_", " <br> ") + "</h4>");
         $("#info-content").html(msg);
     };
 
@@ -177,7 +177,7 @@ function init_map() {
         $("#watershed-name").hide();
         $.each(infoLookup, function(k, info) {
             if (info && info.data && info.data[js_opts.name_field]) {
-                $("#watershed-name").html(info.data[js_opts.name_field]);
+                $("#watershed-name").html(info.data[js_opts.name_field].replace("_", " <br> "));
                 $("#watershed-name").show();
             }
         });
