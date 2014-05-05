@@ -314,9 +314,9 @@ class Command(BaseCommand):
             fh.write(xml)
 
         # Get all dbf fieldnames for the utfgrids
-        all_dbf_fieldnames = [cf.dbf_fieldname for cf in cfs_with_fields]
+        all_dbf_fieldnames = [aux.dbf_fieldname for aux in auxs]
         all_dbf_fieldnames.extend([c.dbf_fieldname for c in cs])
-        all_dbf_fieldnames.extend([aux.dbf_fieldname for aux in auxs])
+        all_dbf_fieldnames.extend([cf.dbf_fieldname for cf in cfs_with_fields])
         all_dbf_fieldnames.append(params['name_field'])
 
         cfg = {
@@ -360,7 +360,12 @@ class Command(BaseCommand):
         for fieldname in numeric_dbf_fieldnames:
             vals = layer.get_fields(fieldname)
             vals = [x for x in vals if x >= 0 ]
-            breaks = sorted(get_jenks_breaks(vals, 4))
+            try:
+                breaks = sorted(get_jenks_breaks(vals, 4))
+            except ValueError:
+                # it's a non-numeric field, don't map it
+                print "  skipping", fieldname
+                continue
             breaks = [0.000001 if x == 0.0 else x for x in breaks]
 
             # colors = {
