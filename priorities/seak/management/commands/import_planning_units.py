@@ -533,9 +533,9 @@ class Command(BaseCommand):
             PuVsCf.objects.bulk_create(puvscf_batch)
             PuVsCost.objects.bulk_create(puvscost_batch)
 
-        assert len(PuVsCf.objects.all()) == len(pus) * len(cfs_with_fields)
-        assert len(PuVsCost.objects.all()) == len(pus) * len(cs)
-        assert len(PuVsAux.objects.all()) == len(pus) * len(auxs)
+        assert PuVsCf.objects.count() == len(pus) * len(cfs_with_fields)
+        assert PuVsCost.objects.count() == len(pus) * len(cs)
+        assert PuVsAux.objects.count() == len(pus) * len(auxs)
 
         # Load Geographies from xls
         print

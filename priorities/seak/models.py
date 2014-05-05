@@ -611,9 +611,14 @@ class Scenario(Analysis):
             costs = []
 
             raw_costs = dict([(x.cost.slug, x.amount) for x in pu.puvscost_set.all()])
-
+            
             for cname in sorted_cost_keys:
-                pucosts = scaled_costs[cname]
+                try:
+                    pucosts = scaled_costs[cname]
+                except KeyError:
+                    # old scenario, new cost; can't display it
+                    continue
+
                 thecost = pucosts[pu.fid]
                 breaks = scaled_breaks[cname]
 
