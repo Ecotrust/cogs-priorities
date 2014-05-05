@@ -483,11 +483,11 @@ class Scenario(Analysis):
         path = os.path.join(self.outdir, "output", "seak_r*.csv")
         outputs = glob.glob(path)
         numreps = self.numreps
-        if len(outputs) == numreps:
+        repsdone = len(outputs)
+
+        if repsdone == numreps:
             if not self.done:
                 return (0, numreps)
-
-        repsdone = len(outputs)
 
         return (repsdone, numreps)
 
@@ -735,9 +735,11 @@ class Scenario(Analysis):
         url = self.get_absolute_url()
         if process_is_running(url):
             status = """Analysis is currently running."""
+            if self.progress[0] == 0:
+                status += " (Pre-processing)"
             code = 2
         elif process_is_complete(url):
-            status = "Analysis completed; compiling results..."
+            status = "Analysis completed. Compiling results..."
             code = 3
         elif process_is_pending(url):
             status = "Analysis is in the queue but not yet running."
@@ -887,7 +889,6 @@ class Scenario(Analysis):
         kmlcache.save()
         return fullkml
        
-
     @property 
     def kml_working(self):
         code = self.status_code
