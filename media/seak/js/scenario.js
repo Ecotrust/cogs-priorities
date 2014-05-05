@@ -318,6 +318,7 @@ function scenariosViewModel() {
   };
 
   self.saveScenarioForm = function(self, event) {
+        $('#button-save-scenario').attr('disabled',true);
         var targets = {};
         var penalties = {};
         var costs = {};
@@ -462,12 +463,14 @@ function scenariosViewModel() {
 
   // start the scenario editing process
   self.editScenario = function() {
+    $('#button-save-scenario').attr('disabled',false);
     self.formLoadError(false);
     self.formLoadComplete(false);
     self.showScenarioForm("edit", self.selectedFeature().uid());
   };
 
   self.addScenarioStart = function() {
+    $('#button-save-scenario').attr('disabled',false);
     self.formLoadError(false);
     self.formLoadComplete(false);
     self.showScenarioForm('create');
@@ -517,6 +520,7 @@ function scenariosViewModel() {
    };
 
   self.selectScenario = function(feature, event) {
+    $('#button-save-scenario').attr('disabled',false);
     if (!self.planningUnitsLoadComplete()) { return false; }
 
     self.selectControl.select(feature);
