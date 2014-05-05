@@ -518,9 +518,20 @@ class Command(BaseCommand):
                     amt = 0  # no non-null negatives
                 puvscost_batch.append(PuVsCost(pu=pu, cost=c, amount=amt))
 
-        PuVsAux.objects.bulk_create(puvsaux_batch)
-        PuVsCf.objects.bulk_create(puvscf_batch)
-        PuVsCost.objects.bulk_create(puvscost_batch)
+            if i > 1 and i % settings.N_BULK_CREATE == 0:
+                print "Writing to database..."
+                PuVsAux.objects.bulk_create(puvsaux_batch)
+                PuVsCf.objects.bulk_create(puvscf_batch)
+                PuVsCost.objects.bulk_create(puvscost_batch)
+                puvsaux_batch = []
+                puvscf_batch = []
+                puvscost_batch = []
+
+        if len(puvscost_batch) > 0 and len(puvscf_batch) > 0 and len(puvscost_batch) > 0:
+            # flush the remainder
+            PuVsAux.objects.bulk_create(puvsaux_batch)
+            PuVsCf.objects.bulk_create(puvscf_batch)
+            PuVsCost.objects.bulk_create(puvscost_batch)
 
         assert len(PuVsCf.objects.all()) == len(pus) * len(cfs_with_fields)
         assert len(PuVsCost.objects.all()) == len(pus) * len(cs)
