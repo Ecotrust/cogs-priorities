@@ -1131,6 +1131,6 @@ class PlanningUnitShapes(models.Model):
     bests = models.IntegerField(default=0) 
     hits = models.IntegerField(default=0) 
     fid = models.IntegerField(null=True)
-    name = models.CharField(max_length=99, null=True)
+    name = models.CharField(max_length=255, null=True)
     geometry = models.MultiPolygonField(srid=settings.GEOMETRY_DB_SRID, 
             null=True, blank=True, verbose_name="Planning Unit Geometry")
