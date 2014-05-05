@@ -142,7 +142,7 @@ class PlanningUnit(models.Model):
     Django model representing polygon planning units
     '''
     fid = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=99)
+    name = models.CharField(max_length=255)
     geometry = models.MultiPolygonField(srid=settings.GEOMETRY_DB_SRID, 
             null=True, blank=True, verbose_name="Planning Unit Geometry")
     calculated_area = models.FloatField(null=True, blank=True) # pre-calculated in GIS
