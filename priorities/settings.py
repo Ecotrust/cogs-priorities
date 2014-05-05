@@ -58,8 +58,8 @@ CELERY_IMPORT = ('seak.tasks',)
 MARXAN_BIN =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_bin','MarOpt_v243_Linux64')) 
 MARXAN_OUTDIR =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_output'))
 MARXAN_TEMPLATEDIR = os.path.join(MARXAN_OUTDIR, 'template')
-MARXAN_NUMREPS = 40
-MARXAN_NUMITNS = 250000
+MARXAN_NUMREPS = 20
+MARXAN_NUMITNS = 1250000
 
 LOG_FILE = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'logs', 'seak.log'))
 MEDIA_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'mediaroot'))
