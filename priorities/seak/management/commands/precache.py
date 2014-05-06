@@ -15,9 +15,9 @@ class Command(BaseCommand):
         request = RequestFactory().get('/layer_manager/layers.json')
         get_json(request)
 
-        # print "Caching scenario results..."
-        # for scenario in Scenario.objects.all():
-        #     a = scenario.results
+        print "Caching scenario results..."
+        for scenario in Scenario.objects.all():
+            a = scenario.results
 
         print "Caching some tiles..."
         sz = settings.JS_OPTS['start_zoom']
