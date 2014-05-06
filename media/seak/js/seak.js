@@ -163,7 +163,12 @@ function init_map() {
                 $("#info").show();
             }
         });
-        $("#info-title").html("<h4>" + puname.replace("_", " <br> ") + "</h4>");
+        if (puname.indexOf("_") > 1) {
+            $("#info-title").html("<h4>" + puname.replace("_", " <br> ") + "</h4>");
+        else {
+            $("#info-title").html("<h4>" + puname.replace("_", "")  + "</h4>");
+        }
+
         $("#info-content").html(msg);
     };
 
@@ -175,9 +180,15 @@ function init_map() {
 
     var nameCallback = function(infoLookup) {
         $("#watershed-name").hide();
+        var puname;
         $.each(infoLookup, function(k, info) {
             if (info && info.data && info.data[js_opts.name_field]) {
-                $("#watershed-name").html(info.data[js_opts.name_field].replace("_", " <br> "));
+                puname = info.data[js_opts.name_field];
+                if (puname.indexOf("_") > 1) {
+                    $("#watershed-name").html(.replace("_", " <br> "));
+                } else {
+                    $("#watershed-name").html(.replace("_", ""));
+                }
                 $("#watershed-name").show();
             }
         });
