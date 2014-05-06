@@ -325,7 +325,7 @@ class Command(BaseCommand):
                 "name": "Redis",
                 "host": "localhost",
                 "port": 6379,
-                "db": 1
+                "db": settings.APP_REDIS_DB
             },
             "layers": {
                 "planning_units":
