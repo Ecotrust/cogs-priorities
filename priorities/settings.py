@@ -59,7 +59,7 @@ MARXAN_BIN =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'ma
 MARXAN_OUTDIR =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_output'))
 MARXAN_TEMPLATEDIR = os.path.join(MARXAN_OUTDIR, 'template')
 MARXAN_NUMREPS = 20
-MARXAN_NUMITNS = 1250000
+MARXAN_NUMITNS = 2250000
 
 N_BULK_CREATE = 2000  # How many items do we store in memory while importing before hitting the DB
 
