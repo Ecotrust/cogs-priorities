@@ -318,7 +318,6 @@ function scenariosViewModel() {
   };
 
   self.saveScenarioForm = function(self, event) {
-        $('#button-save-scenario').attr('disabled',true);
         var targets = {};
         var penalties = {};
         var costs = {};
@@ -371,6 +370,7 @@ function scenariosViewModel() {
             $(frm).find('input[name="name"]').focus();
         } else {
             // GO .. we are clear to submit the form
+            $('#button-save-scenario').attr('disabled',true);
             var values = {};
             var actionUrl = $(frm).attr('action');
             $(frm).find('input,select,textarea').each(function() {
