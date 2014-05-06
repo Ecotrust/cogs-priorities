@@ -184,9 +184,9 @@ function init_map() {
             if (info && info.data && info.data[js_opts.name_field]) {
                 puname = info.data[js_opts.name_field];
                 if (puname.indexOf("_") > 1) {
-                    $("#watershed-name").html(.replace("_", " <br> "));
+                    $("#watershed-name").html(puname.replace("_", " <br> "));
                 } else {
-                    $("#watershed-name").html(.replace("_", ""));
+                    $("#watershed-name").html(puname.replace("_", ""));
                 }
                 $("#watershed-name").show();
             }
