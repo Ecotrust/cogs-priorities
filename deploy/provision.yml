@@ -87,6 +87,13 @@
       template: src=templates/celeryd.conf.j2 dest=/etc/supervisor/conf.d/celeryd-{{ app_name }}.conf owner=root group={{ remote_user }} mode=0644
       #copy: src=files/foo.conf dest=/etc/file.conf owner=bin group=wheel mode=0644
 
+    - name: Install global python requirements
+      tags:
+          - deps
+      pip: name={{item}} state=present
+      with_items:
+        - redis
+
     - name: Install python requirements
       tags:
           - deps
@@ -254,14 +261,14 @@
       when: newdata is defined and newdata
       notify: 
         - restart celery
-        # - restart celery
         - reload nginx
         - restart uwsgi
       command: "{{ manage }} import_planning_units {{ project_path }}/data/planning_units_simple.shp {{ project_path }}/data/metrics.xls {{ project_path }}/data/planning_units_full.shp"
 
     - name: clear redis cache
+      redis: command=flush db=5 flush_mode=db  ##!! IMPORTANT, make sure this matches settings.APP_REDIS_DB
       when: newdata is defined and newdata
-      command: "redis-cli FLUSHALL"
+      # command: "redis-cli FLUSHALL"
 
     - name: clear django cache
       notify:
