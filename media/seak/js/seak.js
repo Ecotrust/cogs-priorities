@@ -165,10 +165,9 @@ function init_map() {
         });
         if (puname.indexOf("_") > 1) {
             $("#info-title").html("<h4>" + puname.replace("_", " <br> ") + "</h4>");
-        else {
+        } else {
             $("#info-title").html("<h4>" + puname.replace("_", "")  + "</h4>");
         }
-
         $("#info-content").html(msg);
     };
 
