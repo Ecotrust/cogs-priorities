@@ -48,7 +48,10 @@ class MarxanAnalysis(object):
     def write_puvcf(self):
         out = "%s/data/puvcf.dat" % self.outdir
         template = os.path.join(self.templatedir, 'puvcf.dat')
-        if os.path.exists(template):
+        if not os.path.exists(template):
+            raise Exception("puvcf.dat template required!")
+
+        if settings.VARIABLE_GEOGRAPHY:
             outfh = open(out, 'w')
             inlines = open(template, 'r').readlines()
             outfh.write(inlines[0])
@@ -65,8 +68,10 @@ class MarxanAnalysis(object):
                     # i.e. number of output rows == planning_units * species
                     outfh.write(','.join([str(x) for x in [line_items[0], puid, amount]]))
                     outfh.write('\n')
-            outfh.close() 
-            #copyfile(template, out)
+            outfh.close()
+        else:
+            # Assume the template is 100% ready to go
+            copyfile(template, out)
         
     def write_spec(self):
         fh = open("%s/data/spec.dat" % self.outdir, 'w')
