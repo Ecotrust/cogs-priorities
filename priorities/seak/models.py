@@ -1029,20 +1029,20 @@ class Scenario(Analysis):
                                 </Rule>
                             
                     </Style>
+                    <!--
                     <Style name="pu_best">
                         <Rule>
                             <Filter>([bests] &gt;= 1)</Filter>
-                            <!--
-                            <LineSymbolizer stroke="#000000" stroke-width="0.5" stroke-opacity="1" stroke-linejoin="round" />
                             <PointSymbolizer/> 
-                            -->
                             <PolygonSymbolizer fill="#081d58" fill-opacity="1.0" gamma=".45" />
                         </Rule>
                     </Style>
+                    -->
                     <Layer name="layer" srs="&google_mercator;">
                         <StyleName>pu</StyleName>
+                        <!--
                         <StyleName>pu_best</StyleName>
-
+                        -->
                         <Datasource>
                             <Parameter name="type">postgis</Parameter>
                             <Parameter name="host">%(HOST)s</Parameter>
