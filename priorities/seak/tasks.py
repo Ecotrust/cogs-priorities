@@ -9,6 +9,7 @@ def marxan_start(m):
     m.write_puvcf()
     m.write_spec()
     m.write_input()
+    m.write_bound()
     print "running Marxan..."
     m.run()
     print 
