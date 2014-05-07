@@ -307,8 +307,9 @@
     - name: reload nginx
       action: service name=nginx state=reloaded
 
+    - name: turn off maintenance mode
+      command: "rm /tmp/.maintenance_mode_{{ app_name }}"
+
     - name: precache
       command: "{{ manage }} precache"
 
-    - name: turn off maintenance mode
-      command: "rm /tmp/.maintenance_mode_{{ app_name }}"
