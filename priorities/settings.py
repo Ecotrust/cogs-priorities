@@ -116,6 +116,7 @@ CELERYBEAT_SCHEDULE = {
     },
 }
 CELERY_TIMEZONE = 'UTC'
+CELERY_ACCEPT_CONTENT = ['pickle', 'json', 'msgpack', 'yaml']
 import djcelery
 djcelery.setup_loader()
 
