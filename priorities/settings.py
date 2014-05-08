@@ -174,6 +174,7 @@ SHOW_RAW_COSTS = False # in report
 SHOW_ALL_COSTS = True # in report
 SHOW_AUX = False # in report
 SHOW_GOAL_MET = True # in report
+USE_BLM = True  # Use boundary length modifier?
 
 JS_OPTS = {
     'start_zoom': 3,  

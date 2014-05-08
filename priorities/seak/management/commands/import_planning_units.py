@@ -7,6 +7,7 @@ from django.template.defaultfilters import slugify
 from django.core.management import call_command
 from jenks import jenks as get_jenks_breaks
 from madrona.layer_manager.models import Layer, Theme 
+from shutil import copyfile
 import json
 
 def find_possible(key, possible):
@@ -29,13 +30,20 @@ class Command(BaseCommand):
         from django.conf import settings
 
         try: 
-            shp = args[0]
-            xls = args[1]
+            try:
+                shp = args[0]
+                xls = args[1]
+            except IndexError:
+                shp = os.path.realpath(os.path.join(os.path.dirname(__file__), 
+                    '..', '..', '..', '..', 'data', 'planning_units_simple.shp'))
+                xls = os.path.realpath(os.path.join(os.path.dirname(__file__), 
+                    '..', '..', '..', '..', 'data', 'metrics.xls'))
+
             assert os.path.exists(shp)
             assert os.path.exists(xls)
             print "Using %s as the data layer" % shp
             print "Using %s as the xls metadata" % xls
-        except (AssertionError, IndexError):
+        except AssertionError:
             raise CommandError("Specify shp and xls file\n \
                     python manage.py import_planning_units test.shp test.xls <optional: full res shp>")
 
@@ -78,7 +86,17 @@ class Command(BaseCommand):
             ms.append(PlanningUnit)
         for m in ms: 
             m.objects.all().delete()
-            assert len(m.objects.all()) == 0
+            assert m.objects.all().count() == 0
+
+        # Copy bound.dat to template dir, should be pre-created and exist in the same dir as the xls file
+        bound_in = os.path.realpath(os.path.join(os.path.dirname(xls), 'bound.dat'))
+        bound_out = os.path.realpath(os.path.join(settings.MARXAN_TEMPLATEDIR, 'bound.dat'))
+        if os.path.exists(bound_in):
+            copyfile(bound_in, bound_out)
+        elif settings.USE_BLM:
+            raise Exception("bound.dat must exist beside the xls file when settings.USE_BLM is True")
+        else:
+            print "Skipping bound.dat not found"
 
         # Loading planning units from Shapefile
         print "Loading planning units from Shapefile"
