@@ -94,6 +94,11 @@ class ConservationFeature(models.Model):
     uid = models.IntegerField(primary_key=True)
 
     @property
+    @cachemethod("seak_conservationfeature_%(uid)s_total_amount")
+    def total_amount(self):
+        return sum([x.amount for x in self.puvscf_set.all() if x.amount])
+
+    @property
     def level_string(self):
         """ All levels concatenated with --- delim """
         levels = [self.level1, self.level2] #, self.level3, self.level4, self.level5]
@@ -129,6 +134,11 @@ class Cost(models.Model):
     dbf_fieldname = models.CharField(max_length=15, null=True, blank=True)
     units = models.CharField(max_length=16, null=True, blank=True)
     desc = models.TextField(null=True, blank=True)
+
+    @property
+    @cachemethod("seak_cost_%(uid)s_ordered_puvscosts")
+    def ordered_puvscosts(self):
+        return list(self.puvscost_set.all().order_by('pu'))
 
     @property
     def slug(self):
@@ -350,7 +360,6 @@ class Scenario(Analysis):
         # assumes that all caches associated with this scenario contain <uid>_*
         key_pattern = "%s_*" % self.uid
         cache.delete_pattern(key_pattern)
-        assert cache.keys(key_pattern) == []
 
         # remove the xml file
         try:
@@ -358,8 +367,8 @@ class Scenario(Analysis):
         except OSError:
             pass
 
-        # delete the tiles directly
-        [redisconn.delete(x) for x in redisconn.keys() if self.uid in x]
+        # delete the tiles directly (and any remaining )
+        [redisconn.delete(x) for x in redisconn.keys(pattern="*%s*" % self.uid)]
 
         # remove the PlanningUnitShapes
         PlanningUnitShapes.objects.filter(stamp=self.id).delete()
@@ -371,7 +380,6 @@ class Scenario(Analysis):
         Fire off the marxan analysis
         '''
         from seak.marxan import MarxanAnalysis
-         
         self.invalidate_cache()
 
         # create the target and penalties
@@ -382,7 +390,7 @@ class Scenario(Analysis):
         #geography_fids = json.loads(self.input_geography)
         geography_fids = []
 
-        assert len(targets.keys()) == len(penalties.keys()) #== len(ConservationFeature.objects.all())
+        assert len(targets.keys()) == len(penalties.keys())
         assert max(targets.values()) <= 1.0
         assert min(targets.values()) >=  0.0
 
@@ -410,11 +418,13 @@ class Scenario(Analysis):
         else:
             puqs = PlanningUnit.objects.select_related().all().order_by('fid')
 
-        for cf in ConservationFeature.objects.select_related().all():
+        cfs_qs = ConservationFeature.objects.all()
+        for cf in cfs_qs:
             if settings.VARIABLE_GEOGRAPHY:
+                # big performance bottleneck
                 total = sum([x.amount for x in cf.puvscf_set.filter(pu__in=puqs) if x.amount])
             else:
-                total = sum([x.amount for x in cf.puvscf_set.all() if x.amount])
+                total = cf.total_amount
             target_prop = targets[cf.pk]
             # only take 99.9% at most to avoid rounding errors 
             # which lead Marxan to believe that the target is unreachable
@@ -438,16 +448,18 @@ class Scenario(Analysis):
         for cost in Cost.objects.all():
             costkey = cost.slug
             if settings.VARIABLE_GEOGRAPHY:
+                # big performance bottleneck
                 puvscosts = PuVsCost.objects.filter(cost=cost, pu__in=puqs).order_by('pu')
             else:
-                puvscosts = PuVsCost.objects.filter(cost=cost).order_by('pu')
+                puvscosts = cost.ordered_puvscosts
             raw_costs[costkey] = [x.amount for x in puvscosts]
 
         pus = [pu.fid for pu in puqs] # assume this ordering matches the costs
 
         # make sure the lists are aligned
+        len_pus = len(pus)
         for k, v in raw_costs.items():
-            assert len(pus) == len(v)
+            assert len_pus == len(v)
 
         # scale, weight and combine costs
         weighted_costs = {}
@@ -464,7 +476,6 @@ class Scenario(Analysis):
 
         logger.debug("Firing off the marxan process")
         check_status_or_begin(marxan_start, task_args=(m,), polling_url=self.get_absolute_url())
-        # self.process_output()
         return True
 
     @property
