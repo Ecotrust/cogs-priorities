@@ -399,6 +399,7 @@ function scenariosViewModel() {
             .error( function(jqXHR, textStatus, errorThrown) {
                 console.log("ERROR", errorThrown, textStatus);
                 self.formSaveError(true);
+                $('#button-save-scenario').attr('disabled', false);
             })
             .complete( function() {
                 self.formSaveComplete(true);
