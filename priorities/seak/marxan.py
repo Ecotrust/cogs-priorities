@@ -2,6 +2,8 @@ import os
 from django.conf import settings
 from madrona.common.utils import get_logger
 from shutil import copyfile
+import subprocess
+
 log = get_logger()
 
 class MarxanError(Exception):
@@ -164,17 +166,22 @@ VERBOSITY 3
 
 
     def run(self):
+
+        # What a hack! This seems to be required to leverage multiple CPUs
+        # http://bugs.python.org/issue17038
+        # http://stackoverflow.com/q/15639779/519385
+        # basically some C extensions bork multiprocessing without it
+        os.system("taskset -p 0xff %d" % os.getpid())
+
         os.chdir(self.outdir)
-        import subprocess
         proc = subprocess.Popen(
-                # ['./marxan'], 
                 [self.marxan_bin], 
-                shell=True, 
                 stdin=subprocess.PIPE, 
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
         )
-        print str(proc.communicate()[0])[:800] + "....."
+        print str(proc.communicate('\n')[0])[:800] + "....."
+
 
     @property 
     def best(self):
