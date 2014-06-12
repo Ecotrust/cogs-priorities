@@ -1,3 +1,6 @@
+For New Relic server monitoring, save deploy/local_vars.yml.template as deploy/local_vars.yml
+    Update newrelic_license_key to be your New Relic license key
+
 
 Initial provisioning of ALL servers defined in hosts
 

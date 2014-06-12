@@ -44,3 +44,4 @@ MAINTENANCE_MODE
 .vagrant
 tile
 data/*
+deploy/local_vars.yml
