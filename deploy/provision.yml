@@ -6,8 +6,8 @@
   sudo: yes
 
   vars:
-    app_name: cogs-dev
-    dbname: 'cogsdev' # no dash
+    app_name: cogs
+    dbname: 'cogs' # no dash
 
     venv_path: '/usr/local/venv/{{app_name}}'
     project_path: '/usr/local/apps/{{app_name}}'
