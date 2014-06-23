@@ -352,6 +352,8 @@
       command: "rm /tmp/.maintenance_mode_{{ app_name }}"
 
     - name: precache
+      async: 10000
+      poll: 0
       command: "{{ manage }} precache"
 
     - name: turn off maintenance mode
