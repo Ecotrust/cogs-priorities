@@ -31,7 +31,7 @@ gallus
 [prod:vars]
 remote_user=ubuntu
 manage_with_git=true
-git_branch=rastertile
+git_branch=master
 debug=False
 domain=cogs.priorities.ecotrust.org
 use_new_relic=True
