@@ -81,7 +81,7 @@ HELP_EMAIL = 'ksdev@ecotrust.org'
 # One redis database for everything, unique to this app
 # Must NOT conflict with other apps on this server
 #######################################
-APP_REDIS_DB = 5
+APP_REDIS_DB = 2
 
 # Use redis_sessions 
 SESSION_ENGINE = 'redis_sessions.session'

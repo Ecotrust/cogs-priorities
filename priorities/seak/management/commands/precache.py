@@ -44,7 +44,7 @@ class Command(BaseCommand):
         layers.extend([(x.dbf_fieldname, 'png') for x in Cost.objects.all()])
         layers.extend([(x.dbf_fieldname, 'png') for x in ConservationFeature.objects.all()])
 
-        for z in zooms[:5]: # cache first _ zoom levels only
+        for z in zooms[:3]: # cache first _ zoom levels only
             for layer in layers:
                 cmd = "%s %s -c %s -l %s -e %s -b %s %s" % (sys.executable, seed_script, 
                                                                tilecfg, layer[0], layer[1], extent, z)
