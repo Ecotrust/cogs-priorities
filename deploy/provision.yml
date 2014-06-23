@@ -19,6 +19,9 @@
 
   tasks:
 
+    - name: make www-data remote user group
+      user: name=www-data groups={{ remote_user }} append=yes
+
     - name: go into maintenance mode
       notify:
         - turn off maintenance mode
@@ -259,7 +262,7 @@
       copy: src=../data dest={{ project_path }}
 
     # INSTALL data
-    - name: install data
+    - name: import planning units
       when: newdata is defined and newdata
       notify: 
         - restart celery
