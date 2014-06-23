@@ -6,10 +6,11 @@
   sudo: yes
 
   vars:
-    app_name: cogs-priorities
-    venv_path: '/usr/local/venv/cogs-priorities'
-    project_path: '/usr/local/apps/cogs-priorities'
-    dbname: 'cogs'
+    app_name: cogs-dev
+    dbname: 'cogsdev' # no dash
+
+    venv_path: '/usr/local/venv/{{app_name}}'
+    project_path: '/usr/local/apps/{{app_name}}'
     webuser: www-data
     manage: "{{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py"
 
@@ -21,7 +22,7 @@
     - name: go into maintenance mode
       notify:
         - turn off maintenance mode
-      command: "touch /tmp/.maintenance_mode"
+      command: "touch /tmp/.maintenance_mode_{{ app_name }}"
 
     - name: Get aptitude for upgrade
       tags:
@@ -88,6 +89,13 @@
       template: src=templates/celeryd.conf.j2 dest=/etc/supervisor/conf.d/celeryd-{{ app_name }}.conf owner=root group={{ remote_user }} mode=0644
       #copy: src=files/foo.conf dest=/etc/file.conf owner=bin group=wheel mode=0644
 
+    - name: Install global python requirements
+      tags:
+          - deps
+      pip: name={{item}} state=present
+      with_items:
+        - redis
+
     - name: Install python requirements
       tags:
           - deps
@@ -105,6 +113,7 @@
         - redis
         - kombu
         - uwsgi>=1.2.6
+        - 'git+https://github.com/springmeyer/djmapnik.git@8d736a73470b#egg=djmapnik-0.1.3'
         - 'git+https://github.com/Ecotrust/madrona.git@master#egg=madrona'
         - 'git+git://github.com/perrygeo/TileStache.git@master#egg=TileStache'
         - 'git+https://github.com/perrygeo/jenks.git#egg=jenks'
@@ -113,12 +122,12 @@
       when: manage_with_git
       git: repo=https://github.com/Ecotrust/cogs-priorities.git
            dest={{ project_path }}
-           version=master
+           version={{ git_branch }}
       tags: 
         - deploy
 
     - name: go script
-      template: src=templates/go.j2 dest=/home/{{ remote_user }}/go owner={{ remote_user }} group={{ remote_user }} mode=0755
+      template: src=templates/go.j2 dest=/home/{{ remote_user }}/go_{{ app_name }} owner={{ remote_user }} group={{ remote_user }} mode=0755
 
     - name: settings local
       tags:
@@ -215,14 +224,17 @@
     - name: remove default site
       file: path=/etc/nginx/sites-enabled/default state=absent
 
+    - name: log file permissions
+      file: path={{ project_path }}/logs/seak.log state=file owner={{ webuser }} group={{ remote_user }} mode=0775
+
     - name: stupid uwsgi hack
       file: path=/usr/lib/uwsgi/plugins state=directory
 
     - name: marxan_output writable by remote_user (celery)
-      file: path={{ project_path }}/marxan_output owner={{ remote_user }} state=directory mode=755
+      file: path={{ project_path }}/marxan_output owner={{ webuser }} group={{ remote_user }} state=directory mode=775
 
     - name: template dir writable
-      file: path={{ project_path }}/marxan_output/template owner={{ remote_user }} state=directory mode=755
+      file: path={{ project_path }}/marxan_output/template owner={{ webuser }} group={{ remote_user }} state=directory mode=775
 
     - name: uwsgi init script to use venv version of uwsgi
       notify: restart uwsgi
@@ -251,14 +263,14 @@
       when: newdata is defined and newdata
       notify: 
         - restart celery
-        # - restart celery
         - reload nginx
         - restart uwsgi
       command: "{{ manage }} import_planning_units {{ project_path }}/data/planning_units_simple.shp {{ project_path }}/data/metrics.xls {{ project_path }}/data/planning_units_full.shp"
 
     - name: clear redis cache
+      redis: command=flush db=5 flush_mode=db  ##!! IMPORTANT, make sure this matches settings.APP_REDIS_DB
       when: newdata is defined and newdata
-      command: "redis-cli FLUSHALL"
+      # command: "redis-cli FLUSHALL"
 
     - name: clear django cache
       notify:
@@ -335,6 +347,9 @@
 
     - name: reload nginx
       action: service name=nginx state=reloaded
+
+    - name: turn off maintenance mode
+      command: "rm /tmp/.maintenance_mode_{{ app_name }}"
 
     - name: precache
       command: "{{ manage }} precache"

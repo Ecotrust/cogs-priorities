@@ -20,6 +20,7 @@ ansible_ssh_host=127.0.0.1
 ansible_ssh_port=2200
 ansible_ssh_private_key_file=~/.vagrant.d/insecure_private_key
 manage_with_git=true
+git_branch=rastertile
 debug=False
 domain=localhost
 use_new_relic=False
@@ -28,8 +29,9 @@ use_new_relic=False
 gallus
 
 [prod:vars]
-remote_user=mperry
+remote_user=ubuntu
 manage_with_git=true
+git_branch=rastertile
 debug=False
 domain=cogs.priorities.ecotrust.org
 use_new_relic=True

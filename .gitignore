@@ -34,6 +34,7 @@ anneal/backup/*
 *.working
 data/local/*
 tile_config/*.xml
+tile_config/tiles.cfg
 *wsgi.py
 env*
 marxan_bin/*

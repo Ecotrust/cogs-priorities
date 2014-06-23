@@ -7,6 +7,7 @@ from django.template.defaultfilters import slugify
 from django.core.management import call_command
 from jenks import jenks as get_jenks_breaks
 from madrona.layer_manager.models import Layer, Theme 
+from shutil import copyfile
 import json
 
 def find_possible(key, possible):
@@ -29,13 +30,20 @@ class Command(BaseCommand):
         from django.conf import settings
 
         try: 
-            shp = args[0]
-            xls = args[1]
+            try:
+                shp = args[0]
+                xls = args[1]
+            except IndexError:
+                shp = os.path.realpath(os.path.join(os.path.dirname(__file__), 
+                    '..', '..', '..', '..', 'data', 'planning_units_simple.shp'))
+                xls = os.path.realpath(os.path.join(os.path.dirname(__file__), 
+                    '..', '..', '..', '..', 'data', 'metrics.xls'))
+
             assert os.path.exists(shp)
             assert os.path.exists(xls)
             print "Using %s as the data layer" % shp
             print "Using %s as the xls metadata" % xls
-        except (AssertionError, IndexError):
+        except AssertionError:
             raise CommandError("Specify shp and xls file\n \
                     python manage.py import_planning_units test.shp test.xls <optional: full res shp>")
 
@@ -78,7 +86,17 @@ class Command(BaseCommand):
             ms.append(PlanningUnit)
         for m in ms: 
             m.objects.all().delete()
-            assert len(m.objects.all()) == 0
+            assert m.objects.all().count() == 0
+
+        # Copy bound.dat to template dir, should be pre-created and exist in the same dir as the xls file
+        bound_in = os.path.realpath(os.path.join(os.path.dirname(xls), 'bound.dat'))
+        bound_out = os.path.realpath(os.path.join(settings.MARXAN_TEMPLATEDIR, 'bound.dat'))
+        if os.path.exists(bound_in):
+            copyfile(bound_in, bound_out)
+        elif settings.USE_BLM:
+            raise Exception("bound.dat must exist beside the xls file when settings.USE_BLM is True")
+        else:
+            print "Skipping bound.dat not found"
 
         # Loading planning units from Shapefile
         print "Loading planning units from Shapefile"
@@ -314,9 +332,9 @@ class Command(BaseCommand):
             fh.write(xml)
 
         # Get all dbf fieldnames for the utfgrids
-        all_dbf_fieldnames = [cf.dbf_fieldname for cf in cfs_with_fields]
+        all_dbf_fieldnames = [aux.dbf_fieldname for aux in auxs]
         all_dbf_fieldnames.extend([c.dbf_fieldname for c in cs])
-        all_dbf_fieldnames.extend([aux.dbf_fieldname for aux in auxs])
+        all_dbf_fieldnames.extend([cf.dbf_fieldname for cf in cfs_with_fields])
         all_dbf_fieldnames.append(params['name_field'])
 
         cfg = {
@@ -325,7 +343,7 @@ class Command(BaseCommand):
                 "name": "Redis",
                 "host": "localhost",
                 "port": 6379,
-                "db": 1
+                "db": settings.APP_REDIS_DB
             },
             "layers": {
                 "planning_units":
@@ -360,7 +378,12 @@ class Command(BaseCommand):
         for fieldname in numeric_dbf_fieldnames:
             vals = layer.get_fields(fieldname)
             vals = [x for x in vals if x >= 0 ]
-            breaks = sorted(get_jenks_breaks(vals, 4))
+            try:
+                breaks = sorted(get_jenks_breaks(vals, 4))
+            except ValueError:
+                # it's a non-numeric field, don't map it
+                print "  skipping", fieldname
+                continue
             breaks = [0.000001 if x == 0.0 else x for x in breaks]
 
             # colors = {
@@ -513,13 +536,24 @@ class Command(BaseCommand):
                     amt = 0  # no non-null negatives
                 puvscost_batch.append(PuVsCost(pu=pu, cost=c, amount=amt))
 
-        PuVsAux.objects.bulk_create(puvsaux_batch)
-        PuVsCf.objects.bulk_create(puvscf_batch)
-        PuVsCost.objects.bulk_create(puvscost_batch)
+            if i > 1 and i % settings.N_BULK_CREATE == 0:
+                print "Writing to database..."
+                PuVsAux.objects.bulk_create(puvsaux_batch)
+                PuVsCf.objects.bulk_create(puvscf_batch)
+                PuVsCost.objects.bulk_create(puvscost_batch)
+                puvsaux_batch = []
+                puvscf_batch = []
+                puvscost_batch = []
 
-        assert len(PuVsCf.objects.all()) == len(pus) * len(cfs_with_fields)
-        assert len(PuVsCost.objects.all()) == len(pus) * len(cs)
-        assert len(PuVsAux.objects.all()) == len(pus) * len(auxs)
+        if len(puvscost_batch) > 0 and len(puvscf_batch) > 0 and len(puvscost_batch) > 0:
+            # flush the remainder
+            PuVsAux.objects.bulk_create(puvsaux_batch)
+            PuVsCf.objects.bulk_create(puvscf_batch)
+            PuVsCost.objects.bulk_create(puvscost_batch)
+
+        assert PuVsCf.objects.count() == len(pus) * len(cfs_with_fields)
+        assert PuVsCost.objects.count() == len(pus) * len(cs)
+        assert PuVsAux.objects.count() == len(pus) * len(auxs)
 
         # Load Geographies from xls
         print

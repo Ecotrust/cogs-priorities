@@ -1,4 +1,5 @@
 import os
+import sys
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from seak.models import Cost, ConservationFeature, Scenario
@@ -9,10 +10,6 @@ class Command(BaseCommand):
         from seak.views import planning_units_geojson
         from django.test.client import RequestFactory
         from madrona.layer_manager.views import get_json 
-
-        print "Caching the planning_units.geojson response..."
-        request = RequestFactory().get('/seak/planning_units.geojson')
-        planning_units_geojson(request)
 
         print "Caching the layer_manager response..."
         request = RequestFactory().get('/layer_manager/layers.json')
@@ -37,16 +34,19 @@ class Command(BaseCommand):
         ]
 
         tilecfg = os.path.abspath(os.path.join(os.path.dirname(__file__),'..','..','..','..','tile_config','tiles.cfg'))
+        seed_script = os.path.join(os.path.dirname(sys.executable), 'tilestache-seed.py')
         for layer in layers:
-            cmd = "tilestache-seed.py -c %s -l %s -e %s -b %s %s" % (tilecfg, layer[0], layer[1], extent, ' '.join(zooms[:-2]))
+            cmd = "%s %s -c %s -l %s -e %s -b %s %s" % (sys.executable, seed_script, tilecfg, 
+                                                        layer[0], layer[1], extent, ' '.join(zooms[:6]))
             print cmd
             os.popen(cmd)
 
         layers.extend([(x.dbf_fieldname, 'png') for x in Cost.objects.all()])
         layers.extend([(x.dbf_fieldname, 'png') for x in ConservationFeature.objects.all()])
 
-        for z in zooms[:2]: # cache first two zoom levels only
+        for z in zooms[:5]: # cache first _ zoom levels only
             for layer in layers:
-                cmd = "tilestache-seed.py -c %s -l %s -e %s -b %s %s" % (tilecfg, layer[0], layer[1], extent, z)
+                cmd = "%s %s -c %s -l %s -e %s -b %s %s" % (sys.executable, seed_script, 
+                                                               tilecfg, layer[0], layer[1], extent, z)
                 print cmd
                 os.popen(cmd)

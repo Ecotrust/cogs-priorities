@@ -59,7 +59,9 @@ MARXAN_BIN =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'ma
 MARXAN_OUTDIR =  os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'marxan_output'))
 MARXAN_TEMPLATEDIR = os.path.join(MARXAN_OUTDIR, 'template')
 MARXAN_NUMREPS = 20
-MARXAN_NUMITNS = 2000000
+MARXAN_NUMITNS = 2250000
+
+N_BULK_CREATE = 2000  # How many items do we store in memory while importing before hitting the DB
 
 LOG_FILE = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'logs', 'seak.log'))
 MEDIA_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), '..', 'mediaroot'))
@@ -74,18 +76,25 @@ TEMPLATE_DEBUG = False
 LOGIN_REDIRECT_URL = '/'
 HELP_EMAIL = 'ksdev@ecotrust.org'
 
+#######################################
+# IMPORTANT
+# One redis database for everything, unique to this app
+# Must NOT conflict with other apps on this server
+#######################################
+APP_REDIS_DB = 5
+
 # Use redis_sessions 
 SESSION_ENGINE = 'redis_sessions.session'
 SESSION_REDIS_HOST = 'localhost'
 SESSION_REDIS_PORT = 6379
-SESSION_REDIS_DB = 0
+SESSION_REDIS_DB = APP_REDIS_DB
 SESSION_REDIS_PREFIX = 'priorities-session'
 
 # Redis for caching
 CACHES = {
     "default": {
         "BACKEND": "redis_cache.cache.RedisCache",
-        "LOCATION": "127.0.0.1:6379:2",
+        "LOCATION": "localhost:6379:%d" % APP_REDIS_DB,
         "OPTIONS": {
             "CLIENT_CLASS": "redis_cache.client.DefaultClient",
         }
@@ -93,42 +102,78 @@ CACHES = {
 }
 
 # Redis for celery
-BROKER_URL = 'redis://localhost:6379/3'
+BROKER_URL = 'redis://localhost:6379/%d' % APP_REDIS_DB
 BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 43200}  # 12 hours
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/4'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/%d' % APP_REDIS_DB
 CELERY_ALWAYS_EAGER = False
 CELERY_DISABLE_RATE_LIMITS = True
-from datetime import timedelta
-CELERYBEAT_SCHEDULE = {
-    'sweep_for_errors': {
-        'task': 'sweep_for_errors',
-        'schedule': timedelta(seconds=600),
-        'args': None
-    },
-}
 CELERY_TIMEZONE = 'UTC'
+CELERY_ACCEPT_CONTENT = ['pickle', 'json', 'msgpack', 'yaml']
 import djcelery
 djcelery.setup_loader()
 
 import logging
-LOG_LEVEL = logging.INFO
-dblogger = logging.getLogger('django.db.backends')
-dblogger.setLevel(logging.INFO)
+logging.getLogger('django.db.backends').setLevel(logging.INFO)
+logging.getLogger('django.db.backends').setLevel(logging.ERROR)
+
+# settings.py
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        },
+    },
+    'handlers': {
+        'rotatefile': {
+            'level':'DEBUG',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename': LOG_FILE,
+            'maxBytes': 1024*1024*5, # 5 MB
+            'backupCount': 5,
+            'formatter':'standard',
+        }, 
+    },
+    'loggers': {
+        'django.db.backends': {
+            'handlers':['rotatefile'],
+            'propagate': False,
+            'level':'INFO',
+        },
+        'madrona.models': {
+            'handlers':['rotatefile'],
+            'propagate': False,
+            'level':'INFO',
+        },
+        'seak.models': {
+            'handlers':['rotatefile'],
+            'propagate': False,
+            'level':'DEBUG',
+        },
+        '': {
+            'handlers': ['rotatefile'],
+            'level': 'WARNING',
+        },
+    }
+}
 
 SLIDER_MODE = "single" # 'dual' OR 'single'
 SLIDER_SHOW_RAW = False
 SLIDER_SHOW_PROPORTION = True
 SLIDER_START_COLLAPSED = True
 VARIABLE_GEOGRAPHY = False # do we allow variable geographies (True) or just use all planning units (False)?
-SHOW_RAW_COSTS = True # in report
+SHOW_RAW_COSTS = False # in report
+SHOW_ALL_COSTS = True # in report
 SHOW_AUX = False # in report
 SHOW_GOAL_MET = True # in report
+USE_BLM = True  # Use boundary length modifier?
 
 JS_OPTS = {
     'start_zoom': 3,  
     'num_levels': 9,  
     'center': {'lon': -96, 'lat': 39},
-    'extent': [-127.1, 25.0, -65.0, 51.0],
+    'extent': [-127.1, 25.0, -62.0, 51.0],
     'name_field': 'NAME',
     'sigfigs': 3,
     'zoom_on_select': False,

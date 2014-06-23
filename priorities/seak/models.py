@@ -22,8 +22,12 @@ from django.utils import simplejson as json
 from madrona.common.models import KmlCache
 from jenks import jenks as get_jenks_breaks
 from collections import defaultdict
+import redis
 
 logger = get_logger()
+
+# connection must match the cache set in scenario_tiles view
+redisconn = redis.Redis(host='localhost', port=6379, db=settings.APP_REDIS_DB)
 
 def cachemethod(cache_key, timeout=60*60*24*365):
     '''
@@ -90,6 +94,11 @@ class ConservationFeature(models.Model):
     uid = models.IntegerField(primary_key=True)
 
     @property
+    @cachemethod("seak_conservationfeature_%(uid)s_total_amount")
+    def total_amount(self):
+        return sum([x.amount for x in self.puvscf_set.all() if x.amount])
+
+    @property
     def level_string(self):
         """ All levels concatenated with --- delim """
         levels = [self.level1, self.level2] #, self.level3, self.level4, self.level5]
@@ -127,6 +136,11 @@ class Cost(models.Model):
     desc = models.TextField(null=True, blank=True)
 
     @property
+    @cachemethod("seak_cost_%(uid)s_ordered_puvscosts")
+    def ordered_puvscosts(self):
+        return list(self.puvscost_set.all().order_by('pu'))
+
+    @property
     def slug(self):
         return slugify(self.name.lower())
 
@@ -138,7 +152,7 @@ class PlanningUnit(models.Model):
     Django model representing polygon planning units
     '''
     fid = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=99)
+    name = models.CharField(max_length=255)
     geometry = models.MultiPolygonField(srid=settings.GEOMETRY_DB_SRID, 
             null=True, blank=True, verbose_name="Planning Unit Geometry")
     calculated_area = models.FloatField(null=True, blank=True) # pre-calculated in GIS
@@ -273,7 +287,7 @@ class Scenario(Analysis):
     input_targets = JSONField(verbose_name='Target Percentage of Habitat')
     input_penalties = JSONField(verbose_name='Penalties for Missing Targets') 
     input_relativecosts = JSONField(verbose_name='Relative Costs')
-    input_geography = JSONField(verbose_name='Input Geography fids')
+    input_geography = JSONField(verbose_name='Input Geography fids', null=True, blank=True) 
     input_scalefactor = models.FloatField(default=0.0) 
     description = models.TextField(default="", null=True, blank=True, verbose_name="Description/Notes")
 
@@ -339,12 +353,26 @@ class Scenario(Analysis):
         Remove any cached values associated with this scenario.
         Warning: additional caches will need to be added to this method
         '''
-        keys = ["%s_results",]
-        keys = [x % self.uid for x in keys]
-        cache.delete_many(keys)
-        for key in keys:
-            assert cache.get(key) == None
-        logger.debug("invalidated cache for %s" % str(keys))
+        if not self.id:
+            return True
+
+        # depends on django-redis as the cache backend!!!
+        # assumes that all caches associated with this scenario contain <uid>_*
+        key_pattern = "%s_*" % self.uid
+        cache.delete_pattern(key_pattern)
+
+        # remove the xml file
+        try:
+            os.remove(self.mapnik_xml_path)
+        except OSError:
+            pass
+
+        # delete the tiles directly (and any remaining )
+        [redisconn.delete(x) for x in redisconn.keys(pattern="*%s*" % self.uid)]
+
+        # remove the PlanningUnitShapes
+        PlanningUnitShapes.objects.filter(stamp=self.id).delete()
+
         return True
 
     def run(self):
@@ -352,17 +380,17 @@ class Scenario(Analysis):
         Fire off the marxan analysis
         '''
         from seak.marxan import MarxanAnalysis
-         
         self.invalidate_cache()
 
         # create the target and penalties
-        logger.debug("Create targets and penalties")
         targets = self.process_dict(json.loads(self.input_targets))
         penalties = self.process_dict(json.loads(self.input_penalties))
         cost_weights = json.loads(self.input_relativecosts)
-        geography_fids = json.loads(self.input_geography)
 
-        assert len(targets.keys()) == len(penalties.keys()) #== len(ConservationFeature.objects.all())
+        #geography_fids = json.loads(self.input_geography)
+        geography_fids = []
+
+        assert len(targets.keys()) == len(penalties.keys())
         assert max(targets.values()) <= 1.0
         assert min(targets.values()) >=  0.0
 
@@ -382,7 +410,7 @@ class Scenario(Analysis):
             self.input_scalefactor = 0.5
 
         # Apply the target and penalties
-        logger.debug("Apply the targets and penalties")
+        logger.debug("Creating the MarxanAnalysis object")
         cfs = []
 
         if settings.VARIABLE_GEOGRAPHY:
@@ -390,11 +418,13 @@ class Scenario(Analysis):
         else:
             puqs = PlanningUnit.objects.select_related().all().order_by('fid')
 
-        for cf in ConservationFeature.objects.select_related().all():
+        cfs_qs = ConservationFeature.objects.all()
+        for cf in cfs_qs:
             if settings.VARIABLE_GEOGRAPHY:
+                # big performance bottleneck
                 total = sum([x.amount for x in cf.puvscf_set.filter(pu__in=puqs) if x.amount])
             else:
-                total = sum([x.amount for x in cf.puvscf_set.all() if x.amount])
+                total = cf.total_amount
             target_prop = targets[cf.pk]
             # only take 99.9% at most to avoid rounding errors 
             # which lead Marxan to believe that the target is unreachable
@@ -418,16 +448,18 @@ class Scenario(Analysis):
         for cost in Cost.objects.all():
             costkey = cost.slug
             if settings.VARIABLE_GEOGRAPHY:
+                # big performance bottleneck
                 puvscosts = PuVsCost.objects.filter(cost=cost, pu__in=puqs).order_by('pu')
             else:
-                puvscosts = PuVsCost.objects.filter(cost=cost).order_by('pu')
+                puvscosts = cost.ordered_puvscosts
             raw_costs[costkey] = [x.amount for x in puvscosts]
 
         pus = [pu.fid for pu in puqs] # assume this ordering matches the costs
 
         # make sure the lists are aligned
+        len_pus = len(pus)
         for k, v in raw_costs.items():
-            assert len(pus) == len(v)
+            assert len_pus == len(v)
 
         # scale, weight and combine costs
         weighted_costs = {}
@@ -440,12 +472,10 @@ class Scenario(Analysis):
         final_costs = [1.0 if x < 1.0 else x for x in final_costs] # enforce a minimum cost of 1.0
         pucosts = zip(pus, final_costs)
 
-        logger.debug("Creating the MarxanAnalysis object")
-        m = MarxanAnalysis(pucosts, cfs, self.outdir)
+        m = MarxanAnalysis(pucosts, cfs, self.outdir, self.id)
 
-        logger.debug("Firing off the process")
+        logger.debug("Firing off the marxan process")
         check_status_or_begin(marxan_start, task_args=(m,), polling_url=self.get_absolute_url())
-        self.process_results()
         return True
 
     @property
@@ -464,19 +494,18 @@ class Scenario(Analysis):
         path = os.path.join(self.outdir, "output", "seak_r*.csv")
         outputs = glob.glob(path)
         numreps = self.numreps
-        if len(outputs) == numreps:
+        repsdone = len(outputs)
+
+        if repsdone == numreps:
             if not self.done:
                 return (0, numreps)
-        return (len(outputs), numreps)
 
-    def geojson(self, srid):
+        return (repsdone, numreps)
+
+    def geojson(self, srid=None):
         # Note: no reprojection support here 
         rs = self.results
-        if 'units' in rs:
-            selected_fids = [r['fid'] for r in rs['units']]
-        else:
-            selected_fids = []
-        
+
         if 'bbox' in rs: 
             bbox = rs['bbox']
         else:
@@ -506,19 +535,30 @@ class Scenario(Analysis):
                'date_modified': self.date_modified.strftime("%m/%d/%y %I:%M%P"),
                'user': self.user.username,
                'user_fullname': fullname,
-               'selected_fids': selected_fids,
-               'potential_fids': json.loads(self.input_geography)
+               #'selected_fids': selected_fids,
+               #'potential_fids': json.loads(self.input_geography)
             }
         }
         return json.dumps(serializable)
 
+    @cachemethod("consfeat_dict")
+    def consfeat_dict(self):
+        #consfeats = dict([(x.pk, x.__dict__) for x in ConservationFeature.objects.prefetch_related('puvscf_set')])
+        consfeats = []
+        for cf in ConservationFeature.objects.prefetch_related('puvscf_set'):
+            dd = cf.__dict__
+            dd['amount'] = sum([x.amount for x in cf.puvscf_set.all() if x.amount])
+            del dd['_prefetched_objects_cache']
+            consfeats.append((cf.pk, dd))
+        return dict(consfeats)
+        
     @property
     @cachemethod("seak_scenario_%(id)s_results")
     def results(self):
         targets = json.loads(self.input_targets)
         penalties = json.loads(self.input_penalties)
         cost_weights = json.loads(self.input_relativecosts)
-        geography = json.loads(self.input_geography)
+
         targets_penalties = {}
         for k, v in targets.items():
             targets_penalties[k] = {'label': k.replace('---', ' > ').replace('-',' ').title(), 'target': v, 'penalty': None}
@@ -533,35 +573,36 @@ class Scenario(Analysis):
         if not self.done:
             return {'targets_penalties': targets_penalties, 'costs': cost_weights}
 
+        logger.debug("Calculating results for %s" % self.uid)
         bestjson = json.loads(self.output_best)
         bestpks = [int(x) for x in bestjson['best']]
-        bestpus = PlanningUnit.objects.select_related().filter(pk__in=bestpks).order_by('name')
-        potentialpus = PlanningUnit.objects.filter(fid__in=geography)
+        bestpus = PlanningUnit.objects.filter(pk__in=bestpks).order_by('name').prefetch_related('puvscost_set', 'puvscost_set__cost')
+
+        potentialpus = PlanningUnit.objects.all()
         bbox = None
         if bestpus:
             bbox = potentialpus.extent()
         best = []
-        logger.debug("looping through bestpus queryset")
 
-        
         scaled_costs = {}
         all_costs = Cost.objects.all()
         scaled_breaks = {}
+
+        fids = [x.fid for x in PlanningUnit.objects.all()]
+        fids_selected = [x.fid for x in bestpus]
+
         for costslug, weight in cost_weights.items():
-            if weight <= 0:
+            if weight <= 0 and not settings.SHOW_ALL_COSTS:
                 continue
+
             try:
                 cost = [x for x in all_costs if x.slug == costslug][0] 
             except IndexError:
                 continue
 
-            all_selected = PuVsCost.objects.select_related().filter(cost=cost, pu__in=bestpus)
-            all_potential = PuVsCost.objects.select_related().filter(cost=cost, pu__in=potentialpus)
-
+            all_potential = PuVsCost.objects.filter(cost=cost) #, pu__in=potentialpus)
             vals = [x.amount for x in all_potential]
-            fids = [x.pu.fid for x in all_potential]
-            fids_selected = [x.pu.fid for x in all_selected]
-
+                       
             scaled_values = [int(x) for x in scale_list(vals, floor=0.0)]
             pucosts_potential = dict(zip(fids, scaled_values))
             extract = lambda x, y: dict(zip(x, map(y.get, x)))
@@ -569,17 +610,26 @@ class Scenario(Analysis):
             scaled_costs[costslug] = pucosts
             scaled_breaks[costslug] = get_jenks_breaks(scaled_values, 3)
 
-        sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid') if x.slug in scaled_costs.keys()]
+        if not settings.SHOW_ALL_COSTS:
+            sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid') if x.slug in scaled_costs.keys()]
+        else:
+            sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid')]
         
-        # TODO: Optimize this loop, can take several seconds
         summed_costs = {}
+
         for pu in bestpus:
             centroid = pu.centroid 
             costs = []
-            raw_costs = dict([(x.cost.slug, x.amount) for x in pu.puvscost_set.all()])
 
+            raw_costs = dict([(x.cost.slug, x.amount) for x in pu.puvscost_set.all()])
+            
             for cname in sorted_cost_keys:
-                pucosts = scaled_costs[cname]
+                try:
+                    pucosts = scaled_costs[cname]
+                except KeyError:
+                    # old scenario, new cost; can't display it
+                    continue
+
                 thecost = pucosts[pu.fid]
                 breaks = scaled_breaks[cname]
 
@@ -597,7 +647,10 @@ class Scenario(Analysis):
                 else: 
                     summed_costs[cname] = raw_costs[cname]
 
-            auxs = dict([(x.aux.name, x.value) for x in pu.puvsaux_set.all()])
+            if settings.SHOW_AUX:
+                auxs = dict([(x.aux.name, x.value) for x in pu.puvsaux_set.all()])
+            else:
+                auxs = {}
 
             best.append({'name': pu.name, 
                          'fid': pu.fid, 
@@ -608,32 +661,32 @@ class Scenario(Analysis):
 
         sum_area = sum([x.area for x in bestpus])
 
-        # Parse mvbest
-        # TODO: Optimize this loop, can take several seconds
         fh = open(os.path.join(self.outdir, "output", "seak_mvbest.csv"), 'r')
         lines = [x.strip().split(',') for x in fh.readlines()[1:]]
         fh.close()
         species = []
         num_target_species = 0
         num_met = 0
+        consfeats = self.consfeat_dict()
         for line in lines:
             sid = int(line[0])
             try:
-                consfeat = ConservationFeature.objects.get(pk=sid)
+                consfeat = consfeats[sid]
             except ConservationFeature.DoesNotExist:
                 logger.error("ConservationFeature %s doesn't exist; refers to an old scenario?" % sid)
                 continue
-            sname = consfeat.name
-            sunits = consfeat.units
-            slevel1 = consfeat.level1
-            scode = consfeat.dbf_fieldname
+
+            sname = consfeat["name"]
+            sunits = consfeat["units"]
+            slevel1 = consfeat["level1"]
+            scode = consfeat["dbf_fieldname"]
             starget = float(line[2])
             try:
-                starget_prop = species_level_targets[consfeat.pk]
+                starget_prop = species_level_targets[sid]
             except KeyError:
                 continue
             sheld = float(line[3])
-            stotal = sum([x.amount for x in consfeat.puvscf_set.filter(pu__in=potentialpus) if x.amount])
+            stotal = consfeat['amount']
             try:
                 spcttotal = sheld/stotal 
             except ZeroDivisionError:
@@ -661,7 +714,7 @@ class Scenario(Analysis):
 
         res = {
             'costs': costs, #cost_weights
-            'geography': geography,
+            #'geography': geography,
             'targets_penalties': targets_penalties,
             'area': sum_area, 
             'total_costs': summed_costs, 
@@ -672,6 +725,11 @@ class Scenario(Analysis):
             'species': species, 
             'bbox': bbox,
         }
+
+        # trigger caching of hit maps
+        logger.debug("Trigger caching of scenario maps")
+        self.thunderstorm_sql()
+        self.mapnik_xml()
 
         return res
         
@@ -688,9 +746,11 @@ class Scenario(Analysis):
         url = self.get_absolute_url()
         if process_is_running(url):
             status = """Analysis is currently running."""
+            if self.progress[0] == 0:
+                status += " (Pre-processing)"
             code = 2
         elif process_is_complete(url):
-            status = "Analysis completed; compiling results..."
+            status = "Analysis completed. Compiling results..."
             code = 3
         elif process_is_pending(url):
             status = "Analysis is in the queue but not yet running."
@@ -710,7 +770,7 @@ class Scenario(Analysis):
 
         return (code, "<p>%s</p>" % status)
 
-    def process_results(self):
+    def process_output(self):
         if process_is_complete(self.get_absolute_url()):
             chosen = get_process_result(self.get_absolute_url())
             wshds = PlanningUnit.objects.filter(pk__in=chosen)
@@ -728,7 +788,7 @@ class Scenario(Analysis):
 
     @property
     def done(self):
-        """ Boolean; is process complete? """
+        """ Boolean; is MARXAN process complete? """
         done = True
         if self.output_best is None: 
             done = False
@@ -739,7 +799,7 @@ class Scenario(Analysis):
             done = True
             # only process async results if output fields are blank
             # this means we have to recheck after running
-            self.process_results()
+            self.process_output()
             if self.output_best is None: 
                 done = False
             if self.output_pu_count is None: 
@@ -840,7 +900,6 @@ class Scenario(Analysis):
         kmlcache.save()
         return fullkml
        
-
     @property 
     def kml_working(self):
         code = self.status_code
@@ -882,6 +941,136 @@ class Scenario(Analysis):
         </Style>
         """
 
+    def thunderstorm_sql(self):
+        """
+        Write planning units containing a `pucount`
+        Effectively a join of the planning units and the marxan output
+        Uses the PlanningUnitShapes mechanism with the scenario id as the stamp
+        """
+        from seak.models import PlanningUnitShapes
+
+        stamp = int(self.id)
+        sql = "(SELECT geometry, hits, bests FROM seak_planningunitshapes WHERE stamp = %s) as foo" % stamp 
+
+        if PlanningUnitShapes.objects.filter(stamp=stamp).count() > 0:
+            return sql
+
+        pucount = json.loads(self.output_pu_count)
+        bests = [int(x) for x in json.loads(self.output_best)['best']]
+        pushapes = []
+
+        for pu in PlanningUnit.objects.all():
+            try:
+                hits = pucount[str(pu.fid)] 
+            except KeyError:
+                hits = 0
+
+            if pu.fid in bests:
+                best = 1
+            else:
+                best = 0
+
+            pushapes.append(PlanningUnitShapes(stamp=stamp, fid=pu.fid, pu=pu, name=pu.name,
+                hits=hits, bests=best, geometry=pu.geometry))
+
+        PlanningUnitShapes.objects.bulk_create(pushapes)
+        return sql
+
+    @property  
+    def mapnik_xml_path(self):
+        return os.path.join(self.outdir, "results.xml")
+
+    def mapnik_xml(self):
+        """
+        Mapnik representation of the scenario results
+        """
+        path = self.mapnik_xml_path
+        sql = self.thunderstorm_sql()
+
+        if not os.path.exists(path):
+            dbs = settings.DATABASES['default']
+            context = dbs.copy()
+            context['sql'] = sql
+            context['a'] = settings.MARXAN_NUMREPS - 2
+            context['b'] = round(settings.MARXAN_NUMREPS * 0.7)
+            context['c'] = round(settings.MARXAN_NUMREPS * 0.5)
+            context['d'] = round(settings.MARXAN_NUMREPS * 0.4)
+            context['e'] = round(settings.MARXAN_NUMREPS * 0.3)
+            context['f'] = round(settings.MARXAN_NUMREPS * 0.2)
+
+            with open(path, 'w') as fh:
+                xml = """<?xml version="1.0"?>
+                <!DOCTYPE Map [
+                <!ENTITY google_mercator "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over">
+                ]>
+                <Map srs="&google_mercator;">
+                    <Style name="pu" filter-mode="first">
+                        
+                                <Rule>
+                                    <Filter>([hits] &gt;= %(a)s)</Filter>
+                                    <PolygonSymbolizer fill="#0c2c84" fill-opacity="1.0" gamma=".45" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt;= %(b)s)</Filter>
+                                    <PolygonSymbolizer fill="#225ea8" fill-opacity="1.0" gamma=".45" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt;= %(c)s)</Filter>
+                                    <PolygonSymbolizer fill="#1d91c0" fill-opacity="1.0" gamma=".45" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt;= %(d)s)</Filter>
+                                    <PolygonSymbolizer fill="#41b6c4" fill-opacity="1.0" gamma=".45" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt;= %(e)s)</Filter>
+                                    <PolygonSymbolizer fill="#7fcdbb" fill-opacity="1.0" gamma=".45" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt;= %(f)s)</Filter>
+                                    <PolygonSymbolizer fill="#c7e9b4" fill-opacity="1.0" gamma=".45" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] &gt;= 1)</Filter>
+                                    <PolygonSymbolizer fill="#ffffcc" fill-opacity="1.0" gamma=".45" />
+                                </Rule>
+                                <Rule>
+                                    <Filter>([hits] = 0)</Filter>
+                                    <PolygonSymbolizer fill="#ffffff" fill-opacity="1.0" gamma=".45" />
+                                </Rule>
+                            
+                    </Style>
+                    <!--
+                    <Style name="pu_best">
+                        <Rule>
+                            <Filter>([bests] &gt;= 1)</Filter>
+                            <PointSymbolizer/> 
+                            <PolygonSymbolizer fill="#081d58" fill-opacity="1.0" gamma=".45" />
+                        </Rule>
+                    </Style>
+                    -->
+                    <Layer name="layer" srs="&google_mercator;">
+                        <StyleName>pu</StyleName>
+                        <!--
+                        <StyleName>pu_best</StyleName>
+                        -->
+                        <Datasource>
+                            <Parameter name="type">postgis</Parameter>
+                            <Parameter name="host">%(HOST)s</Parameter>
+                            <Parameter name="dbname">%(NAME)s</Parameter>
+                            <Parameter name="user">%(USER)s</Parameter>
+                            <Parameter name="password">%(PASSWORD)s</Parameter>
+                            <Parameter name="table">%(sql)s</Parameter>
+                            <Parameter name="estimate_extent">false</Parameter>
+                        </Datasource>
+                    </Layer>
+                </Map>""" % context
+
+                fh.write(xml)
+
+        return path
+
+
     class Options:
         form = 'seak.forms.ScenarioForm'
         verbose_name = 'Prioritization Scenario' 
@@ -912,10 +1101,15 @@ class Scenario(Analysis):
                 select='single multiple',
                 type='application/zip',
             ),
-            alternate('Input Files',
+            alternate('Marxan Inputs',
                 'seak.views.watershed_marxan',
                 select='single',
                 type='application/zip',
+            ),
+            alternate('Tile',
+                'seak.views.scenario_tile',
+                select='single',
+                type='image/png',
             ),
         )
 
@@ -945,10 +1139,10 @@ class Folder(FeatureCollection):
 
 class PlanningUnitShapes(models.Model):
     pu = models.ForeignKey(PlanningUnit)
-    stamp = models.FloatField()
+    stamp = models.FloatField(db_index=True)
     bests = models.IntegerField(default=0) 
     hits = models.IntegerField(default=0) 
     fid = models.IntegerField(null=True)
-    name = models.CharField(max_length=99, null=True)
+    name = models.CharField(max_length=255, null=True)
     geometry = models.MultiPolygonField(srid=settings.GEOMETRY_DB_SRID, 
             null=True, blank=True, verbose_name="Planning Unit Geometry")

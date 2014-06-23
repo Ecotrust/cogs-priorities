@@ -1,9 +1,18 @@
 geo $maintenance_ip {
     default 0;
-    127.0.0.1/24    1;  # TODO replace with your internal IP block
+    192.168.50.139    1;  # TODO replace with your internal IP block
 }
 
 server {
+
+    # gzip settings
+    gzip              on;
+    gzip_buffers      16 8k;
+    gzip_comp_level   4;
+    gzip_http_version 1.0;
+    gzip_min_length   1280;
+    gzip_types        text/plain text/css application/x-javascript text/xml application/xml application/xml+rss text/javascript image/x-icon image/bmp application/json;
+    gzip_vary         on;
 
     listen 80;
 
@@ -24,7 +33,7 @@ server {
     if ($maintenance_ip = 0) {
         set $maintenance y;
     }
-    if (-f /tmp/.maintenance_mode) {
+    if (-f /tmp/.maintenance_mode_{{ app_name }}) {
         set $maintenance y$maintenance;
     }
     if ($maintenance = yy) {

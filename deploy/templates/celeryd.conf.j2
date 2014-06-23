@@ -3,9 +3,9 @@
 ; ==============================================
 
 [program:celeryd-{{ app_name }}]
-command={{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py celeryd --loglevel=WARNING
+command={{ venv_path }}/bin/python {{ project_path }}/priorities/manage.py celeryd -O fair --loglevel=WARNING
 directory={{ project_path }}/priorities
-user={{ remote_user }}
+user={{ webuser }}
 numprocs=1
 stdout_logfile=/var/log/celeryd-{{ app_name }}.log
 stderr_logfile=/var/log/celeryd-{{ app_name }}.log

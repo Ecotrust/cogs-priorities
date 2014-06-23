@@ -31,13 +31,13 @@
                                     <div>{% include "layer_manager/legend.html" %}</div>
                                 </div>
                                 <div id="data-tab-content" class="tab-pane active"> 
-                                    <div>{% flatblock "pre-layer-list" 3600 %}</div>
+                                    <div>{% flatblock "pre-layer-list" 31536000 %}</div>
                                     <div class="">
                                         <div>{% include "layer_manager/search.html" %}</div>
                                         <div>{% include "layer_manager/data.html" %}</div>
                                     </div>
 
-                                    <p>{% flatblock "post-layer-list" 3600 %}</p>
+                                    <p>{% flatblock "post-layer-list" 31536000 %}</p>
                                 </div>
 
                                 <div id="scenario-tab-content" class="tab-pane">
@@ -48,22 +48,22 @@
                                                 <img alt="loading" src="/media/img/ajax-loader.gif"/> 
                                             </div>
                                             <div data-bind="if: scenarios.scenarioLoadComplete() && scenarios.scenarioList().length == 0 && scenarios.dataMode() == 'manage'"> 
-                                                <p>{% flatblock "new-manage-scenario" 3600 %}</p>
+                                                <p>{% flatblock "new-manage-scenario" 31536000 %}</p>
                                             </div>
                                             <div data-bind="if: scenarios.scenarioLoadComplete() && scenarios.scenarioList().length == 0 && scenarios.dataMode() == 'shared'"> 
-                                                <p>{% flatblock "new-share-scenario" 3600 %}</p>
+                                                <p>{% flatblock "new-share-scenario" 31536000 %}</p>
                                             </div>
                                             <div class="alert alert-error" data-bind="visible: scenarios.scenarioLoadError">
                                                 <p><strong> Could not load scenario list!</strong></p>
-                                                <p>Please try again... if the error persists, please contact us.</p>
+                                                <p>Please <strong>Refresh</strong> and try again... if the error persists, please contact us.</p>
                                             </div>
                                             <div class="alert alert-error" data-bind="visible: scenarios.planningUnitsLoadError">
                                                 <p><strong> Could not load planning units!</strong></p>
-                                                <p> Please try again... if the error persists, please contact us.</p>
+                                                <p> Please <strong>Refresh</strong> and try again... if the error persists, please contact us.</p>
                                             </div>
                                             <div class="alert alert-error" data-bind="visible: scenarios.formLoadError">
                                                 <p><strong> Could not load the scenario form!</strong></p>
-                                                <p> Please try again... if the error persists, please contact us.</p>
+                                                <p> Please <strong>Refresh</strong> and try again... if the error persists, please contact us.</p>
                                             </div>
                                             <div data-bind="if: scenarios.scenarioList().length > 0">
                                                 <table class="table table-scenariolist table-bordered table-condensed">
@@ -154,6 +154,14 @@
                                                 <i class="icon-tags"></i> Copy </a>
                                                 <a href="#" class="btn btn-mini" data-bind="click: $parent.showDownloadDialog">
                                                 <i class="icon-download-alt"></i> Download</a>
+
+                                                {% if user.is_staff %}
+                                                <a href="#" 
+                                                data-bind="attr: { href:'/features/scenario/links/marxan-inputs/' + uid() }"
+                                                class="btn btn-mini">
+                                                <i class="icon-download-alt"></i> Marxan Files</a>
+                                                {% endif %}
+
                                                 <a href="#" class="btn btn-mini" data-bind="click: $parent.showShareDialog">
                                                 <i class="icon-share-alt"></i> Share</a>
                                                 <a href="#" class="btn btn-mini" data-bind="click: $parent.showDeleteDialog">
@@ -194,7 +202,8 @@
                                                 <button href="#" class="btn" data-bind="click: cancelAddScenario">
                                                     <i class="icon-trash"></i> Cancel
                                                 </button>
-                                                <button href="#" class="btn btn-primary" data-bind="click: saveScenarioForm">
+                                                <button href="#" class="btn btn-primary" id="button-save-scenario"
+                                                        data-bind="click: saveScenarioForm">
                                                     <i class="icon-file"></i> Run Scenario
                                                     <span data-bind="visible: !formSaveComplete()">
                                                         <img alt="loading" src="/media/img/ajax-loader.gif"/>
@@ -211,8 +220,8 @@
                                     {% else %}
                                     <!-- /////////// User not authenticated ///////////////// -->
                                     <div> 
-                                            {% flatblock "home_text" 3600 %}
-                                            <p><em>You currently not logged in to {% flatblock "title" 3600 %}.</em></p>
+                                            {% flatblock "home_text" 31536000 %}
+                                            <p><em>You currently not logged in to {% flatblock "title" 31536000 %}.</em></p>
                                             <p><a class="btn btn-mini" href="{% url registration_register %}" id="register">Register</a> for an account</p>
                                             <p><a class="btn btn-mini" href="{% url user_signin %}" id="signin">Sign In</a> to begin creating scenarios</p>
                                     </div>
@@ -384,9 +393,8 @@
         
         app.timer = null; 
 
+        app.scenarioTileTemplate = "/features/scenario/links/tile/${scenario_uid}/?tile=/${z}/${x}/${y}.png",
         app.utils.loadScenarioLayer = function() {
-            olLayer = map.getLayersByName("Scenario Results")[0];
-
             var keys = [];
             for (var k in app.viewModel.layers.layerIndex)
                 keys.push(k);
@@ -394,14 +402,14 @@
             app.scenarioLayerId = id;
 
             var layerViewModel = new layerModel({
-                name: olLayer.name,
-                type: "Vector",
-                opacity: 0.5,
+                name: "Scenario Results",
+                type: "XYZ",
+                opacity: 1.0,
+                url: app.scenarioTileTemplate,
                 legend: "/media/legends/priorities.png"
             });
-            layerViewModel.layer = olLayer;
+
             app.viewModel.layers.layerIndex[id] = layerViewModel;
-            olLayer.setOpacity(layerViewModel.opacity());
         };
 
         $(document).ready(function () {

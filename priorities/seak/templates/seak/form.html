@@ -15,17 +15,17 @@
     <ul class="nav nav-tabs" id="formtabs" style="margin-bottom:0px;">
         <li class="{% if variable_geography %}active{% else %}hide{% endif %}">
             <a href="#geographytab" id="tab-geography" data-toggle="tab">
-                <span>Step 1<br/><strong>{% flatblock 'geography' 3600 %}</strong></span>
+                <span>Step 1<br/><strong>{% flatblock 'geography' 31536000 %}</strong></span>
             </a> 
         </li>
         <li class="{% if variable_geography %}{% else %}active{% endif %}">
             <a href="#speciestab" id="tab-species" data-toggle="tab">
-                <span>Step {% if variable_geography %}2{% else %}1{% endif %}<br/><strong>{% flatblock 'targets' 3600 %}</strong></span>
+                <span>Step {% if variable_geography %}2{% else %}1{% endif %}<br/><strong>{% flatblock 'targets' 31536000 %}</strong></span>
             </a>
         </li>
         <li>
             <a href="#coststab" id="tab-costs" data-toggle="tab">
-                <span>Step {% if variable_geography %}3{% else %}2{% endif %}<br/><strong>{% flatblock 'constraints' %}</strong></span>
+                <span>Step {% if variable_geography %}3{% else %}2{% endif %}<br/><strong>{% flatblock 'constraints' 31536000 %}</strong></span>
             </a>
         </li>
         <li>
@@ -38,8 +38,9 @@
 
     <div class="tab-content">
 
+    <!-- TODO: REMOVE THIS -->
     <div id="geographytab" class="tab-pane {% if variable_geography %}active{% else %}hide{% endif %}"> 
-        <h4>{% flatblock 'form-geography-header' 3600 %}</h4>
+        <h4>{% flatblock 'form-geography-header' 31536000 %}</h4>
         <div>
             <p> Use a pre-defined geographic region </p>
             <ul>
@@ -52,75 +53,17 @@
             {% endfor %}
             </ul>
         </div>
-        <script>
-        {% if variable_geography %}
-            {% for dg in defined_geographies %}
-            $('#dg_{{dg.slug}}').bind('click', function(e) { 
-                var fids = {{dg.planning_unit_fids}}; 
-                selectGeographyControl.unselectAll();
-                $.each(fids, function (i, fid) {
-                    var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
-                    if (f) { 
-                        selectGeographyControl.select(f);
-                    }
-                });
-                // Zoom to selected features
-                var fts = pu_layer.selectedFeatures;
-                var bounds = fts[0].geometry.getBounds().clone();
-                for(var i=1;i<fts.length;i++) {
-                    bounds.extend(fts[i].geometry.getBounds());
-                }
-                map.zoomToExtent(bounds,false);
-            });
-            {% endfor %}
-        {% else %}
-            // Just take the first defined geography
-            {% with dg=defined_geographies.0 %}
-            $(document).ready( function() { 
-                var fids = {{dg.planning_unit_fids}}; 
-                selectGeographyControl.unselectAll();
-                $.each(fids, function (i, fid) {
-                    var f = pu_layer.getFeaturesByAttribute("fid",fid)[0];
-                    if (f) { 
-                        selectGeographyControl.select(f);
-                    }
-                });
-                // Zoom to selected features
-                var fts = pu_layer.selectedFeatures;
-                var bounds = fts[0].geometry.getBounds().clone();
-                for(var i=1;i<fts.length;i++) {
-                    bounds.extend(fts[i].geometry.getBounds());
-                }
-                map.zoomToExtent(bounds,false);
-            });
-            {% endwith %}
-        {% endif %}
-        </script>
         <br/>
-        <p>{% flatblock 'geography-fine-tune' 3600 %}</p>
-        <!--
-        <a href="javascript:$('#step1Movie').toggle();" class="btn btn-mini">Need Help <i class="icon-white icon-question-sign"></i></a>
-        <br/>
-        <br/>
-        <div id="step1Movie" style="display:none;">
-            <object style="width: 397px; height: 370px;" type="application/x-shockwave-flash" data="/media/seak/swf/select.swf">
-                <param name="movie" value="select.swf" />
-                <param name="quality" value="high" />
-                <param name="bgcolor" value="#ffffff" />
-                <p>You do not have the latest version of Flash installed. Please visit this link to download it: <a href="http://www.adobe.com/products/flashplayer/">http://www.adobe.com/products/flashplayer/</a></p>
-            </object>
-        </div>
-        -->
+        <p>{% flatblock 'geography-fine-tune' 31536000 %}</p>
         <br/>
 
         <div id="currentGeographySelection">
-            You've selected <span class="badge" id="geographySelectionCount">0</span> {% flatblock 'planning-units' 3600 %}.
+            You've selected <span class="badge" id="geographySelectionCount">0</span> {% flatblock 'planning-units' 31536000 %}.
         </div>
-
-           
-    <div id="counter"></div>
-    <div id="area"></div>
+        <div id="counter"></div>
+        <div id="area"></div>
     </div>
+
 
     <div id="generaltab" class="tab-pane"> 
         <h4>Provide a name and (optionally) a description of the prioritization scenario.</h4>
@@ -150,14 +93,14 @@
     </div>
 
     <div id="speciestab" class="tab-pane {% if variable_geography %}{% else %}active{% endif %}">
-        <h4>{% flatblock 'form-conservationfeature-header' 3600 %}</h4>
-        <div> {% flatblock 'form-conservationfeature-description' 3600 %}</div>
+        <h4>{% flatblock 'form-conservationfeature-header' 31536000 %}</h4>
+        <div> {% flatblock 'form-conservationfeature-description' 31536000 %}</div>
         <br/>
         <form action="#" id="form-cfs">
           <table class="table table-condensed">
             <tr>
-                <th> {% flatblock 'show-conservation-features' 3600 %} </th>
-                <th> {% flatblock 'relative-importance' 3600 %}</th>
+                <th> {% flatblock 'show-conservation-features' 31536000 %} </th>
+                <th> {% flatblock 'relative-importance' 31536000 %}</th>
             </tr>
           </table>
           <div id="accordion1" class="accordion">
@@ -173,18 +116,18 @@
                         <div class="span9" style="padding:4px;">
                             <div class="slider-collapse aggregate hide" id="#slider-collapse-{{category.grouper|slugify}}">
                                 <span class="text-success slider-label slider-label-left">
-                                    <small>{% flatblock 'target-low' 3600 %}</small>
+                                    <small>{% flatblock 'target-low' 31536000 %}</small>
                                 </span>
 
                                 <div class="slider-range slider-range-single" 
                                      id="singlerange---CATEGORY-{{category.grouper|slugify}}" style="width:25%"></div> 
 
                                 <span class="text-success slider-label slider-label-right">
-                                    <small>{% flatblock 'target-high' 3600 %}</small>
+                                    <small>{% flatblock 'target-high' 31536000 %}</small>
                                 </span>
 
                                 <span>
-                                    <input type="text" class="targetvalue input-micro" 
+                                    <input type="text" class="categorytargetvalue targetvalue input-micro" 
                                         id="target---CATEGORY-{{category.grouper|slugify}}" value="0.0"/>
                                 </span>
 
@@ -208,9 +151,9 @@
                             <div class="row-fluid">
                                 <!-- SINGLE SLIDER -->
                                 <div class="span10" style="vertical-align:middle;">
-                                    <span class="text-success slider-label slider-label-left"><small>{% flatblock 'target-low' 3600 %}</small></span>
+                                    <span class="text-success slider-label slider-label-left"><small>{% flatblock 'target-low' 31536000 %}</small></span>
                                     <span> <div class="slider-range slider-range-single" id="singlerange---{{cf.id_string}}"></div> </span>
-                                    <span class="text-success slider-label slider-label-right"><small>{% flatblock 'target-high' 3600 %}</small></span>
+                                    <span class="text-success slider-label slider-label-right"><small>{% flatblock 'target-high' 31536000 %}</small></span>
                                 </div>
                                 <div class="span2">
 
@@ -227,12 +170,14 @@
                                         </div>
                                     </div>
 
+                                    <!--
                                     {% if slider_show_raw %}
                                     <div class="input-append">
                                         <input type="text" class="input-small rawtargetvalue" id="rawtarget---{{cf.id_string}}" value="0.0"/>
                                         <span><small>{{cf.units}}</small></span>
                                     </div>
                                     {% endif %} 
+                                    -->
                                 </div>
                             </div>
 
@@ -240,12 +185,12 @@
                             <div class="row-fluid">
                                 <!-- TARGET SLIDER -->
                                 <div class="span2" style="padding-right:13px;">
-                                    <p class="text-info" style="width:65px;">{% flatblock 'target' 3600 %}</p>
+                                    <p class="text-info" style="width:65px;">{% flatblock 'target' 31536000 %}</p>
                                 </div>
                                 <div class="span8" style="vertical-align:middle;">
-                                    <span class="text-success slider-label slider-label-left"><small>{% flatblock 'target-low' 3600 %}</small></span>
+                                    <span class="text-success slider-label slider-label-left"><small>{% flatblock 'target-low' 31536000 %}</small></span>
                                     <div class="slider-range slider-range-target" id="targetrange---{{cf.id_string}}"></div> 
-                                    <span class="text-success slider-label slider-label-right"><small>{% flatblock 'target-high' 3600 %}</small></span>
+                                    <span class="text-success slider-label slider-label-right"><small>{% flatblock 'target-high' 31536000 %}</small></span>
                                 </div>
                                 <div class="span2">
                                     <div>
@@ -256,23 +201,25 @@
                                         {% endif %}
                                     </div>
 
+                                    <!-- 
                                     {% if slider_show_raw %}
                                     <div class="input-append">
                                         <input type="text" class="input-small rawtargetvalue" id="rawtarget---{{cf.id_string}}" value="0.0"/>
                                         <span><small>{{cf.units}}</small></span>
                                     </div>
                                     {% endif %}
+                                    -->
                                 </div>
                             </div>
                             <div class="row-fluid">
                                 <!-- PENALTY SLIDER -->
                                 <div class="span2" style="padding-right:13px;">
-                                    <p class="text-info" style="width:65px;">{% flatblock 'penalty' 3600 %}</p>
+                                    <p class="text-info" style="width:65px;">{% flatblock 'penalty' 31536000 %}</p>
                                 </div>
                                 <div class="span8" style="vertical-align:middle;">
-                                    <span class="text-success slider-label slider-label-left"><small>{% flatblock 'penalty-low' 3600 %}</small></span>
+                                    <span class="text-success slider-label slider-label-left"><small>{% flatblock 'penalty-low' 31536000 %}</small></span>
                                     <div class="slider-range slider-range-penalty" id="penaltyrange---{{cf.id_string}}"></div> 
-                                    <span class="text-success slider-label slider-label-right"><small>{% flatblock 'penalty-high' 3600 %}</small></span>
+                                    <span class="text-success slider-label slider-label-right"><small>{% flatblock 'penalty-high' 31536000 %}</small></span>
                                 </div>
                                 <div class="span2">
                                     <!-- penalty sliders don't have a "raw" value -->
@@ -291,7 +238,7 @@
             </div>
             {% endfor %}
             <div>
-                <p class="debug-only" style="margin-top: 12px; font-size: 75%">{% flatblock 'form-geography-note' 3600 %}</p>
+                <p class="debug-only" style="margin-top: 12px; font-size: 75%">{% flatblock 'form-geography-note' 31536000 %}</p>
             </div>
           </div>
         </form>
@@ -346,8 +293,8 @@
     </div> <!-- End species tab -->
 
     <div id="coststab" class="tab-pane">
-        <h4>{% flatblock 'form-costs-header' 3600 %}</h4>
-        <div> {% flatblock 'form-costs-description' 3600 %}</div>
+        <h4>{% flatblock 'form-costs-header' 31536000 %}</h4>
+        <div> {% flatblock 'form-costs-description' 31536000 %}</div>
         <br/>
         <form action="#" id="form-costs">
           <table class="table table-condensed">
@@ -364,7 +311,7 @@
           </table>
         </form>
         <div>
-            <p class="debug-only" style="margin-top: 12px; font-size: 75%">{% flatblock 'form-geography-note' 3600 %}</p>
+            <p class="debug-only" style="margin-top: 12px; font-size: 75%">{% flatblock 'form-geography-note' 31536000 %}</p>
         </div>
     </div>
     <script>

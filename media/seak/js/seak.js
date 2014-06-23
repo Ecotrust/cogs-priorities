@@ -1,17 +1,12 @@
 var map;
 var hilites;
-var pu_layer;
 var markers;
-var selectFeatureControl;
 var keyboardControl;
-var selectGeographyControl;
 var utfClickControl;
-var costFields = [];
-var cfFields = [];
-var cfTotals = {};
+
 
 Math.sigfig = function (num, sig) {
-    if (num == 0)
+    if (num === 0)
         return 0;
     if (Math.round(num) == num)
         return num;
@@ -19,44 +14,7 @@ Math.sigfig = function (num, sig) {
     if (digits < 1)
         digits = 1;
     return num.toFixed(digits-1);
-}
-
-function getGeographyFieldInfo() {
-    // Find the conservation features, totals and costs represented in ALL of the selected planning units.
-    if (pu_layer.selectedFeatures.length >= 1) {
-        var costList = pu_layer.selectedFeatures[0].attributes.cost_fields;
-        var cfList = pu_layer.selectedFeatures[0].attributes.cf_fields;
-        var cfListTotals = {};
-        $.each( cfList, function(idx, cf) { 
-            cfListTotals[cf] = 0;
-        });
-        var tmpList;
-        $.each( pu_layer.selectedFeatures, function(idx, feat) { 
-            // handle costs
-            tmpList = feat.attributes.cost_fields;
-            costList = costList.intersect(tmpList); 
-
-            // handle conservation features
-            tmpList = feat.attributes.cf_fields;
-            cfList = cfList.intersect(tmpList); 
-
-            // get cf values and add to total
-            $.each( cfList, function(idx, cf) { 
-                cfListTotals[cf] += feat.attributes.cf_values[cf]; 
-            });
-        });
-        costFields = costList;
-        cfFields = cfList;
-        cfTotals = cfListTotals;
-        return {
-            'costList': costList, 
-            'cfList': cfList, 
-            'cfTotals': cfListTotals
-        };
-    } else { 
-        return {}; 
-    }
-}
+};
 
 function init_map() {
     var latlon = new OpenLayers.Projection("EPSG:4326");
@@ -82,17 +40,17 @@ function init_map() {
 
     var terrain = new OpenLayers.Layer.XYZ( "National Geographic Base Map",
         "http://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/${z}/${y}/${x}",
-        {sphericalMercator: true, 
+        {sphericalMercator: true,
          opacity: 0.35,
-         attribution: "National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC" } 
+         attribution: "National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC"}
     );
 
     var pu_utfgrid = new OpenLayers.Layer.UTFGrid({
          url: "/tiles/utfgrid/${z}/${x}/${y}.json",
          utfgridResolution: 4,
-         sphericalMercator: true, 
+         sphericalMercator: true,
          displayInLayerSwitcher: false
-        } 
+        }
     );
 
     var myStyles = new OpenLayers.StyleMap({
@@ -109,44 +67,14 @@ function init_map() {
             fillColor: "#ffff00",
             fillOpacity: 1.0,
             graphicZIndex: 2
-        }),
-        "select_geography": new OpenLayers.Style({
-            display: true,
-            strokeWidth: 1.0,
-            strokeColor: "#777777",
-            strokeOpacity: 1.0,
-            fillColor: "#777777",
-            fillOpacity: 1.0 
         })
     });
 
     // allow testing of specific renderers via "?renderer=Canvas", etc
     var renderer = OpenLayers.Util.getParameters(window.location.href).renderer;
     renderer = (renderer) ? [renderer] : OpenLayers.Layer.Vector.prototype.renderers;
-    pu_layer = new OpenLayers.Layer.Vector("Scenario Results", {
-        styleMap: myStyles,
-        renderers: renderer,
-        displayInLayerSwitcher: false
-    });
 
-    var url = "/seak/planning_units.geojson";
-    var jqxhr = $.ajax({
-        url: url, 
-        cache: true,
-        dataType: 'json', 
-        success: function(data) {
-            var gformat = new OpenLayers.Format.GeoJSON();
-            try {
-                var feats = gformat.read(data); 
-                pu_layer.addFeatures(feats);
-            } catch(err) {
-                console.log(err.message);
-                app.viewModel.scenarios.planningUnitsLoadError(true);
-            }
-        }
-    })
-    .error(function() { app.viewModel.scenarios.planningUnitsLoadError(true); })
-    .complete(function() { app.viewModel.scenarios.planningUnitsLoadComplete(true); });
+    app.viewModel.scenarios.planningUnitsLoadComplete(true);
 
     map.isValidZoomLevel = function(zoomLevel) {
         // Why is this even necessary OpenLayers?.. grrr
@@ -155,56 +83,27 @@ function init_map() {
             (zoomLevel >= this.minZoomLevel) &&
             (zoomLevel < this.minZoomLevel + this.numZoomLevels));
     };
-    
-    selectFeatureControl = new OpenLayers.Control.SelectFeature(
-        pu_layer,
-        {
-            multiple: true
-        }
-    );
-
-    var geographySelectCallback = function(){ 
-        $('#geographySelectionCount').html(pu_layer.selectedFeatures.length);
-    };
-
-    selectGeographyControl = new OpenLayers.Control.SelectFeature(
-        pu_layer,
-        {
-            clickout: true, 
-            toggle: true,
-            multiple: true, 
-            hover: false,
-            toggleKey: "ctrlKey", // ctrl key removes from selection
-            multipleKey: "shiftKey", // shift key adds to selection
-            renderIntent: "select_geography",
-            box: true,
-            onSelect: geographySelectCallback,
-            onUnselect: geographySelectCallback
-        }
-    );
 
     keyboardControl = new OpenLayers.Control.KeyboardDefaults();
 
-    selectFeatureControl.deactivate();
     keyboardControl.deactivate();
-    selectGeographyControl.deactivate();
-    map.addControls([selectFeatureControl, selectGeographyControl, keyboardControl]);
+    map.addControls([keyboardControl]);
 
-    map.addLayers([terrain, pu_layer, pu_utfgrid, markers]);  // must have at least one base layer
+    map.addLayers([terrain, pu_utfgrid, markers]);  // must have at least one base layer
     map.getLayersByName("Markers")[0].setZIndex(9999);
 
     var lookup_url = "/seak/field_lookup.json";
     var fieldLookup;
     var xhr = $.ajax({
-        url: lookup_url, 
+        url: lookup_url,
         cache: true,
-        dataType: 'json', 
-        success: function(data) { 
-            fieldLookup = data; 
+        dataType: 'json',
+        success: function(data) {
+            fieldLookup = data;
         }
     })
-    .error( function() { 
-        fieldLookup = null; 
+    .error( function() {
+        fieldLookup = null;
     });
 
     var sortByKeys = function(obj) {
@@ -237,8 +136,8 @@ function init_map() {
     };
 
     var utfgridCallback = function(infoLookup) {
-        var msg = ""; 
-        var puname = "Watershed Info"; 
+        var msg = "";
+        var puname = "Watershed Info";
         $("#info").hide();
         var fnc = function(idx, val) {
             if (val >= 0) { // Assume negative is null 
@@ -250,8 +149,8 @@ function init_map() {
                         msg += "<tr><td width=\"75%\">"+ idx + "</td><td>" + val + "</td></tr>";
                     }
                 }
-            } 
-            if(idx == js_opts.name_field) { 
+            }
+            if(idx == js_opts.name_field) {
                 puname = val;
             }
         };
@@ -264,7 +163,11 @@ function init_map() {
                 $("#info").show();
             }
         });
-        $("#info-title").html("<h4>" + puname + "</h4>");
+        if (puname.indexOf("_") > 1) {
+            $("#info-title").html("<h4>" + puname.replace("_", " <br> ") + "</h4>");
+        } else {
+            $("#info-title").html("<h4>" + puname.replace("_", "")  + "</h4>");
+        }
         $("#info-content").html(msg);
     };
 
@@ -276,9 +179,15 @@ function init_map() {
 
     var nameCallback = function(infoLookup) {
         $("#watershed-name").hide();
+        var puname;
         $.each(infoLookup, function(k, info) {
             if (info && info.data && info.data[js_opts.name_field]) {
-                $("#watershed-name").html(info.data[js_opts.name_field]);
+                puname = info.data[js_opts.name_field];
+                if (puname.indexOf("_") > 1) {
+                    $("#watershed-name").html(puname.replace("_", " <br> "));
+                } else {
+                    $("#watershed-name").html(puname.replace("_", ""));
+                }
                 $("#watershed-name").show();
             }
         });
@@ -297,7 +206,7 @@ function init_map() {
 // dataTables plugin to sort number OR string by hidden title attribute
 jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     "title-numeric-pre": function ( a ) {
-      try { 
+      try {
           var x = a.match(/title="*(-?[0-9\.]+)/)[1];
           return parseFloat( x );
       } catch(err) {

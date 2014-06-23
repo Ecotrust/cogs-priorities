@@ -114,9 +114,9 @@ def watershed_marxan(request, instance):
     response.write(zip_stream)
     return response
 
-@cache_page(settings.CACHE_TIMEOUT)
-@cache_control(must_revalidate=False, max_age=settings.CACHE_TIMEOUT)
 def planning_units_geojson(request):
+    raise Exception("Geojson not supported in the rastertile version")
+    
     def get_feature_json(geom_json, prop_json):
         return """{
             "type": "Feature",
@@ -191,6 +191,56 @@ def tiles(request):
     path_info = request.path_info.replace('/tiles', '')
     (mimestr, bytestotal) = TileStache.requestHandler(config_hint=settings.TILE_CONFIG, 
             path_info=path_info, query_string=None)
+    return HttpResponse(bytestotal, content_type=mimestr)
+
+
+import re
+_pathinfo_pat = re.compile(r'^/?(?P<l>\w.+)/(?P<z>\d+)/(?P<x>-?\d+)/(?P<y>-?\d+)\.(?P<e>\w+)$')
+
+def scenario_tile(request, instance):
+
+    path_info = "/" + instance.uid + "_tiles" + request.GET.get('tile')
+
+    if not path_info:
+        return HttpResponse("Must supply tile GET paramater", status=400)
+    if not _pathinfo_pat.match(path_info or ''):
+        return HttpResponse('Bad path: "%s"; Expecting something like "/example/0/0/0.png"' % path_info, status=400)
+
+    thisdir = os.path.dirname(os.path.abspath(__file__))
+    dirpath = os.path.realpath(os.path.join(thisdir, '..', '..', 'tile_config'))
+
+    xml_path = instance.mapnik_xml()
+
+    config_dict = {
+      "layers": {
+        instance.uid + "_tiles": {
+          # "metatile": {
+          #   "buffer": 64, 
+          #   "rows": 4, 
+          #   "columns": 4
+          # }, 
+          "provider": {
+            "name": "mapnik", 
+            "mapfile": xml_path
+          }
+        }, 
+      }, 
+      "cache": {
+        "host": "localhost", 
+        "name": "Redis", 
+        "db": settings.APP_REDIS_DB,
+        "port": 6379
+      }, 
+      # "cache": {
+      #   "name": "test", 
+      # }, 
+      "logging": "warning"
+    }
+    config = TileStache.Config.buildConfiguration(config_dict, dirpath)
+
+    (mimestr, bytestotal) = TileStache.requestHandler(
+        config_hint=config, path_info=path_info, query_string=None)
+
     return HttpResponse(bytestotal, content_type=mimestr)
 
 
