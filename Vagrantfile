@@ -14,7 +14,7 @@ Vagrant::Config.run do |config|
     # ssh defaults to 2222
     dev.vm.forward_port 80, 8080
     dev.vm.forward_port 8000, 8000
-    dev.vm.share_folder "v-app", "/usr/local/apps/cogs-priorities", "./"
+    dev.vm.share_folder "v-app", "/usr/local/apps/cogs-dev", "./", owner:"www-data"
   end
 
   # The stage server will NOT have a shared folder 
