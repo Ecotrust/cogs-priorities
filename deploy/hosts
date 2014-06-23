@@ -35,3 +35,8 @@ git_branch=rastertile
 debug=False
 domain=cogs.priorities.ecotrust.org
 use_new_relic=True
+
+
+[local:children]
+dev
+stage
