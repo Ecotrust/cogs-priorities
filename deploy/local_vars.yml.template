@@ -1,2 +1,2 @@
 ---
-newrelic_license_key=YOUR_KEY_HERE 
+newrelic_license_key:'YOUR_KEY_HERE'
