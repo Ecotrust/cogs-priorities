@@ -583,76 +583,6 @@ class Scenario(Analysis):
         if bestpus:
             bbox = potentialpus.extent()
 
-        scaled_costs = {}
-        all_costs = Cost.objects.all()
-        scaled_breaks = {}
-
-        fids = [x.fid for x in PlanningUnit.objects.all()]
-        fids_selected = [x.fid for x in bestpus]
-
-        for costslug, weight in cost_weights.items():
-            if weight <= 0 and not settings.SHOW_ALL_COSTS:
-                continue
-
-            try:
-                cost = [x for x in all_costs if x.slug == costslug][0] 
-            except IndexError:
-                continue
-
-            all_potential = PuVsCost.objects.filter(cost=cost) #, pu__in=potentialpus)
-            vals = [x.amount for x in all_potential]
-                       
-            scaled_values = [int(x) for x in scale_list(vals, floor=0.0)]
-            pucosts_potential = dict(zip(fids, scaled_values))
-            extract = lambda x, y: dict(zip(x, map(y.get, x)))
-            pucosts = extract(fids_selected, pucosts_potential)
-            scaled_costs[costslug] = pucosts
-            scaled_breaks[costslug] = get_jenks_breaks(scaled_values, 3)
-
-        if not settings.SHOW_ALL_COSTS:
-            sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid') if x.slug in scaled_costs.keys()]
-        else:
-            sorted_cost_keys = [x.slug for x in Cost.objects.all().order_by('uid')]
-        
-        summed_costs = {}
-
-        for pu in bestpus:
-            centroid = pu.centroid 
-            costs = []
-
-            raw_costs = dict([(x.cost.slug, x.amount) for x in pu.puvscost_set.all()])
-            
-            for cname in sorted_cost_keys:
-                try:
-                    pucosts = scaled_costs[cname]
-                except KeyError:
-                    # old scenario, new cost; can't display it
-                    continue
-
-                thecost = pucosts[pu.fid]
-                breaks = scaled_breaks[cname]
-
-                # classify the costs into categories
-                if thecost <=  breaks[1]:
-                    theclass = 'low'
-                elif thecost > breaks[2]: 
-                    theclass = 'high'
-                else:
-                    theclass = 'med' 
-                costs.append({'name': cname, 'raw': raw_costs[cname],'scaled': thecost, 'class': theclass})
-
-                if summed_costs.has_key(cname):
-                    summed_costs[cname] += raw_costs[cname]
-                else: 
-                    summed_costs[cname] = raw_costs[cname]
-
-            if settings.SHOW_AUX:
-                auxs = dict([(x.aux.name, x.value) for x in pu.puvsaux_set.all()])
-            else:
-                auxs = {}
-
-        sum_area = sum([x.area for x in bestpus])
-
         fh = open(os.path.join(self.outdir, "output", "seak_mvbest.csv"), 'r')
         lines = [x.strip().split(',') for x in fh.readlines()[1:]]
         fh.close()
@@ -706,10 +636,7 @@ class Scenario(Analysis):
 
         res = {
             'costs': costs, #cost_weights
-            #'geography': geography,
             'targets_penalties': targets_penalties,
-            'area': sum_area, 
-            'total_costs': summed_costs, 
             'num_met': num_met,
             'num_species': num_target_species, #len(species),
             'species': species, 
