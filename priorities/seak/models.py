@@ -574,14 +574,7 @@ class Scenario(Analysis):
             return {'targets_penalties': targets_penalties, 'costs': cost_weights}
 
         logger.debug("Calculating results for %s" % self.uid)
-        bestjson = json.loads(self.output_best)
-        bestpks = [int(x) for x in bestjson['best']]
-        bestpus = PlanningUnit.objects.filter(pk__in=bestpks).order_by('name').prefetch_related('puvscost_set', 'puvscost_set__cost')
 
-        potentialpus = PlanningUnit.objects.all()
-        bbox = None
-        if bestpus:
-            bbox = potentialpus.extent()
 
         fh = open(os.path.join(self.outdir, "output", "seak_mvbest.csv"), 'r')
         lines = [x.strip().split(',') for x in fh.readlines()[1:]]
@@ -640,7 +633,6 @@ class Scenario(Analysis):
             'num_met': num_met,
             'num_species': num_target_species, #len(species),
             'species': species, 
-            'bbox': bbox,
         }
 
         # trigger caching of hit maps

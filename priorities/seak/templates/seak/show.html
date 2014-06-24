@@ -122,22 +122,6 @@
         -->
         {% endif %} 
 
-        {% if show_aux %}
-        <div id="aux" class="tab-pane">
-            <div>
-                <h5> {% flatblock 'show-aux' 31536000 %} </h5>
-                {% for w in results.units %}
-                <div class="row-fluid">
-                    <span class="span4"><strong>{{w.name}}</strong></span>
-                    {% for k,v in w.auxs.items %}
-                    <span class="badge"> {{k}}: {{v}} </span>
-                    {% endfor %}
-                </div>
-                {% endfor %}
-
-            </div>
-        </div>
-        {% endif %}
 
         <div id="species" class="tab-pane">
             <div>
