@@ -582,7 +582,6 @@ class Scenario(Analysis):
         bbox = None
         if bestpus:
             bbox = potentialpus.extent()
-        best = []
 
         scaled_costs = {}
         all_costs = Cost.objects.all()
@@ -652,13 +651,6 @@ class Scenario(Analysis):
             else:
                 auxs = {}
 
-            best.append({'name': pu.name, 
-                         'fid': pu.fid, 
-                         'costs': costs,
-                         'auxs': auxs,
-                         'centroidx': centroid[0],
-                         'centroidy': centroid[1]})
-
         sum_area = sum([x.area for x in bestpus])
 
         fh = open(os.path.join(self.outdir, "output", "seak_mvbest.csv"), 'r')
@@ -718,10 +710,8 @@ class Scenario(Analysis):
             'targets_penalties': targets_penalties,
             'area': sum_area, 
             'total_costs': summed_costs, 
-            'num_units': len(best),
             'num_met': num_met,
             'num_species': num_target_species, #len(species),
-            'units': best,
             'species': species, 
             'bbox': bbox,
         }

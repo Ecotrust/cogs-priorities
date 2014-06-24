@@ -31,7 +31,7 @@
         <li class="active"><a href="#Inputs" class="report-tab" id="tab-report-inputs" data-toggle="tab"><span>{% flatblock 'show-inputs' 31536000 %}</span></a></li>
         {% if instance.done %}
             <li><a href="#species" class="report-tab" id="tab-report-species" data-toggle="tab"><span>{% flatblock 'show-conservation-features' 31536000 %}</span></a></li>
-            <li><a href="#watersheds" class="report-tab" id="tab-report-pus" data-toggle="tab"><span>{% flatblock 'show-planning-units-tab' 31536000 %}</span></a></li>
+
             {% if show_raw_costs %}
             <!-- <li><a href="#costs" data-toggle="tab"><span>{% flatblock 'show-total-costs' 31536000 %}</span></a></li> -->
             {% endif %} 
@@ -106,46 +106,6 @@
 
         {% if instance.done %}
 
-        <div id="watersheds" class="tab-pane">
-            <div>
-                <p>{% flatblock 'optimal-prioritization-scenario' 31536000 %} includes {{results.num_units}} {% flatblock 'show-planning-units' 31536000 %} covering {{results.area|floatformat:0|intcomma}} {% flatblock 'area-units' 31536000 %}. {% flatblock 'show-explain-constraints' 31536000 %}</p>
-
-                <table class="table interactive-table" id="pu-table">
-                <thead>
-                    <tr>
-                        <th> {% flatblock 'show-planning-units' 31536000 %} </th> 
-                        {%for cost in results.units.1.costs %}
-                            <th>{{cost.name|deslug}}</th>
-                        {%endfor%}
-                    </tr>
-                </thead>
-                <tbody id="best-pus">
-                    {% for w in results.units %}
-                    <tr>
-                        <td>
-                            <span title="{{w.name}}"></span>
-                            {{w.name}} 
-                            <span class="hide centroid-x" data-coord="{{w.centroidx}}"></span>
-                            <span class="hide centroid-y" data-coord="{{w.centroidy}}"></span>
-                        </td>
-                        {% for v in w.costs %}
-                        <td>
-                            <span class="hide" title="{{v.raw|floatformat:4}}"></span>
-                            <span>
-                                {% if show_raw_costs %}
-                                {{v.raw|floatformat:2|intcomma}}
-                                {% endif %}
-                            </span>
-                            <span class="label {% if v.class == 'low' %}label{% elif v.class == 'med' %}label-warning{% elif v.class == 'high' %}label-danger{% endif %}"> {{v.class}}
-                            </span>
-                        </td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                </table>
-            </div>
-        </div>
 
         {% if show_raw_costs %}
         <!--
