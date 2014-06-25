@@ -116,7 +116,7 @@
                         <div class="span9" style="padding:4px;">
                             <div class="row-fluid">
                                 <div class="span12">
-                                    <div class="btn-group" data-toggle="buttons-radio" class="button-range" id="buttons---CATEGORY-{{category.grouper|slugify}}">
+                                    <div class="btn-group category-buttons" data-toggle="buttons-radio" class="button-range" id="buttons---CATEGORY-{{category.grouper|slugify}}">
                                       <button class="btn" type="button" name="None" value="0">
                                         None
                                       </button>
@@ -153,11 +153,19 @@
                         <td> 
                             {% if slider_mode == 'single' %}
                             <div class="row-fluid">
-                                <!-- SINGLE SLIDER -->
-                                <div class="span10" style="vertical-align:middle;">
-                                    <span class="text-success slider-label slider-label-left"><small>{% flatblock 'target-low' 31536000 %}</small></span>
-                                    <span> <div class="slider-range slider-range-single" id="singlerange---{{cf.id_string}}"></div> </span>
-                                    <span class="text-success slider-label slider-label-right"><small>{% flatblock 'target-high' 31536000 %}</small></span>
+                                <div class="btn-group target-buttons span10" data-toggle="buttons-radio" class="button-range" id="targetrange---{{cf.id_string}}">
+                                  <button class="btn btn-small" type="button" name="None" value="0">
+                                    None
+                                  </button>
+                                  <button class="btn btn-small" type="button" name="Low" value="5">
+                                    Low
+                                  </button>
+                                  <button class="btn btn-small" type="button" name="Med" value="10">
+                                    Med
+                                  </button>
+                                  <button class="btn btn-small" type="button" name="High" value="25">
+                                    High
+                                  </button>
                                 </div>
                                 <div class="span2">
 
@@ -247,22 +255,29 @@
           </div>
         </form>
         <script>
-            //TODO: this will have to differentiate between category 
-                //and individual button groups.
-            $('[data-toggle="buttons-radio"]').children(".btn").click(function(){
+            $('.category-buttons').children(".btn").click(function(){
                 var value = $(this).val();
-                $(this).parent().parent().parent().parent().find('.slider-collapse').find($("input")).val(value);
                 $(this).parent().find("button").removeClass('active');
                 $(this).addClass('active');
 
                 //old 'apply' logic
-                var targetval = $(this).parent().parent().parent().parent().find('.targetvalue').val();
-                var penaltyval = $(this).parent().parent().parent().parent().find('.penaltyvalue').val();
-                $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-single').slider('value', penaltyval); 
-                $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-penalty').slider('value', penaltyval); 
-                $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-target').slider('value', targetval); 
-                $(this).closest('.accordion-group-objective').find('.accordion-body .penaltyvalue').val(penaltyval).change();
+                var targetval = value;
+                // var penaltyval = $(this).parent().parent().parent().parent().find('.penaltyvalue').val();
+                // $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-single').slider('value', penaltyval); 
+                // $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-penalty').slider('value', penaltyval); 
+                // $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-target').slider('value', targetval); 
+                // $(this).closest('.accordion-group-objective').find('.accordion-body .penaltyvalue').val(penaltyval).change();
+                $(this).closest('.accordion-group-objective').find('.accordion-body .btn').removeClass('active');
+                $(this).closest('.accordion-group-objective').find('.accordion-body button[value="' + value + '"]').addClass('active');
                 $(this).closest('.accordion-group-objective').find('.accordion-body .targetvalue').val(targetval).change();
+            });
+
+            $('.target-buttons').children(".btn").click(function(){
+                var value = $(this).val();
+                $(this).parent().find("button").removeClass('active');
+                $(this).addClass('active');
+                var targetval = value;
+                $(this).parent().parent().find('.targetvalue').val(value)
             });
 
             $('.targetvalue').change( function(e) { 
