@@ -1,3 +1,7 @@
+var LOW_SCENARIO_TARGET = 5;
+var MED_SCENARIO_TARGET = 10;
+var HIGH_SCENARIO_TARGET = 25;
+
 function progressViewModel() {
   var self = this;
 
@@ -257,7 +261,9 @@ function scenariosViewModel() {
             $.each(in_targets, function(key, val) {
                 $("#target---" + key).val(val * 100);
                 $("#targetrange---" + key).slider("value", val * 100);
-                $("#singlerange---" + key).slider("value", val * 100);
+                if (val * 100 == LOW_SCENARIO_TARGET || val * 100 == MED_SCENARIO_TARGET || val * 100 == HIGH_SCENARIO_TARGET || val * 100 == 0) {
+                    $("#singlerange---" + key).find('button[value="' + val * 100 + '"]').addClass('active');
+                }
                 if (val > 0 ) {
                     $('#singlerange---' + key).closest(".accordion-group").find('.cf-collapse').collapse();
                 }

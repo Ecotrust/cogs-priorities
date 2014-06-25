@@ -153,7 +153,7 @@
                         <td> 
                             {% if slider_mode == 'single' %}
                             <div class="row-fluid">
-                                <div class="btn-group target-buttons span10" data-toggle="buttons-radio" class="button-range" id="targetrange---{{cf.id_string}}">
+                                <div class="btn-group target-buttons span10" data-toggle="buttons-radio" class="button-range" id="singlerange---{{cf.id_string}}">
                                   <button class="btn btn-small" type="button" name="None" value="0">
                                     None
                                   </button>
@@ -169,7 +169,7 @@
                                 </div>
                                 <div class="span2">
 
-                                    <div class="row-fluid">
+                                    <div class="row-fluid hide">
                                         <div class="span10">
                                             <input type="text" class="debug-only penaltyvalue" id="penalty---{{cf.id_string}}" value="0.0"/>
                                             <input type="text" class="{% if not slider_show_proportion %}debug-only {% endif %}input-micro targetvalue" 
@@ -254,6 +254,7 @@
             </div>
           </div>
         </form>
+
         <script type="text/javascript" src="/media/seak/js/form_targetvalues.js"></script>
 
         <script>

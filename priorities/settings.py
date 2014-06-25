@@ -41,6 +41,7 @@ COMPRESS_JS['application']['source_filenames'] = (
     'features/js/workspace.js',
     'seak/js/seak.js',
     'seak/js/scenario.js',
+    'seak/js/form_targetvalues.js',
 )
 
 # The following is used to assign a name to the default folder under My Shapes 
