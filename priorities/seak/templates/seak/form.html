@@ -114,25 +114,29 @@
                             href="#collapse-{{category.grouper|slugify}}"> <i class="category-icon icon-minus"></i> {{category.grouper}} </a>
                         </div>
                         <div class="span9" style="padding:4px;">
+                            <div class="row-fluid">
+                                <div class="span12">
+                                    <div class="btn-group" data-toggle="buttons-radio" class="button-range" id="buttons---CATEGORY-{{category.grouper|slugify}}">
+                                      <button class="btn" type="button" name="None" value="0">
+                                        None
+                                      </button>
+                                      <button class="btn" type="button" name="Low" value="5">
+                                        Low
+                                      </button>
+                                      <button class="btn" type="button" name="Med" value="10">
+                                        Med
+                                      </button>
+                                      <button class="btn" type="button" name="High" value="25">
+                                        High
+                                      </button>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="slider-collapse aggregate hide" id="#slider-collapse-{{category.grouper|slugify}}">
-                                <span class="text-success slider-label slider-label-left">
-                                    <small>{% flatblock 'target-low' 31536000 %}</small>
-                                </span>
-
-                                <div class="slider-range slider-range-single" 
-                                     id="singlerange---CATEGORY-{{category.grouper|slugify}}" style="width:25%"></div> 
-
-                                <span class="text-success slider-label slider-label-right">
-                                    <small>{% flatblock 'target-high' 31536000 %}</small>
-                                </span>
-
                                 <span>
-                                    <input type="text" class="categorytargetvalue targetvalue input-micro" 
+                                    <input type="text" class="categorytargetvalue targetvalue input-micro hide"
                                         id="target---CATEGORY-{{category.grouper|slugify}}" value="0.0"/>
                                 </span>
-
-                                <a class="btn btn-mini apply"><small>Apply to all {{category.grouper}}</small></a>
-
                             </div>
                         </div>
                         <div class="debug-only">
@@ -243,6 +247,24 @@
           </div>
         </form>
         <script>
+            //TODO: this will have to differentiate between category 
+                //and individual button groups.
+            $('[data-toggle="buttons-radio"]').children(".btn").click(function(){
+                var value = $(this).val();
+                $(this).parent().parent().parent().parent().find('.slider-collapse').find($("input")).val(value);
+                $(this).parent().find("button").removeClass('active');
+                $(this).addClass('active');
+
+                //old 'apply' logic
+                var targetval = $(this).parent().parent().parent().parent().find('.targetvalue').val();
+                var penaltyval = $(this).parent().parent().parent().parent().find('.penaltyvalue').val();
+                $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-single').slider('value', penaltyval); 
+                $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-penalty').slider('value', penaltyval); 
+                $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-target').slider('value', targetval); 
+                $(this).closest('.accordion-group-objective').find('.accordion-body .penaltyvalue').val(penaltyval).change();
+                $(this).closest('.accordion-group-objective').find('.accordion-body .targetvalue').val(targetval).change();
+            });
+
             $('.targetvalue').change( function(e) { 
                 var targetPrefixes = ['singlerange', 'targetrange'];
                 var len = targetPrefixes.length;
@@ -260,37 +282,22 @@
                 sliderTarget.slider( "option", "value", $(this).val() );
             });
 
-            // Make category slider work
-            $('a.apply').click(function(e) {
-                e.preventDefault();
-                var targetval = $(this).parent().parent().parent().parent().find('.targetvalue').val();
-                var penaltyval = $(this).parent().parent().parent().parent().find('.penaltyvalue').val();
-                $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-single').slider('value', penaltyval); 
-                $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-penalty').slider('value', penaltyval); 
-                $(this).closest('.accordion-group-objective').find('.accordion-body .slider-range-target').slider('value', targetval); 
-                $(this).closest('.accordion-group-objective').find('.accordion-body .penaltyvalue').val(penaltyval).change();
-                $(this).closest('.accordion-group-objective').find('.accordion-body .targetvalue').val(targetval).change();
-            });
-
             // When collapsing details, show the aggregate sliderbar and vice-versa
             $('.cf-collapse').on('hide', function() {
                 $(this).parent().find(".category-icon").removeClass("icon-minus"); 
                 $(this).parent().find(".category-icon").addClass("icon-plus"); 
-                $(this).parent().find('.slider-collapse').show();
             });
             $('.cf-collapse').on('show', function() {
                 $(this).parent().find(".category-icon").removeClass("icon-plus"); 
                 $(this).parent().find(".category-icon").addClass("icon-minus"); 
-                $(this).parent().find('.slider-collapse').hide();
             });
 
             {% if slider_start_collapsed %}
             $('.cf-collapse').parent().find(".category-icon").removeClass("icon-minus"); 
             $('.cf-collapse').parent().find(".category-icon").addClass("icon-plus"); 
-            $('.cf-collapse').parent().find('.slider-collapse').show();
             {% endif %}
         </script>
-    </div> <!-- End species tab -->
+    </div>
 
     <div id="coststab" class="tab-pane">
         <h4>{% flatblock 'form-costs-header' 31536000 %}</h4>
