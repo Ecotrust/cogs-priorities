@@ -42,11 +42,6 @@
         - base
       apt: upgrade=safe update_cache=yes cache_valid_time=604800
 
-    - name: add Mapnik repo
-      tags:
-        - base
-      apt_repository: repo='ppa:mapnik/v2.2.0' state=present update_cache=yes
-
     - name: install base packages
       tags:
         - base
@@ -60,7 +55,7 @@
         - gdal-bin
         - gfortran
         - htop
-        - libmapnik
+        - libmapnik-dev
         - libopenblas-dev
         - liblapack-dev
         - libgeos-dev
@@ -70,7 +65,7 @@
         - mapnik-utils
         - nginx-full
         - postgresql
-        - postgresql-9.1-postgis
+        - postgresql-9.3-postgis-2.1
         - python-dev
         - python-psycopg2
         - python-mapnik
@@ -117,9 +112,11 @@
         - kombu
         - uwsgi>=1.2.6
         - 'git+https://github.com/springmeyer/djmapnik.git@8d736a73470b#egg=djmapnik-0.1.3'
-        - 'git+https://github.com/Ecotrust/madrona.git@master#egg=madrona'
         - 'git+git://github.com/perrygeo/TileStache.git@master#egg=TileStache'
         - 'git+https://github.com/perrygeo/jenks.git#egg=jenks'
+
+    - name: Install Madrona
+      command: "sudo /usr/local/venv/cogs/bin/pip install -e git+https://github.com/Ecotrust/madrona.git@master#egg=madrona --allow-unverified elementtree"
 
     - name: git checkout
       when: manage_with_git
@@ -160,12 +157,12 @@
 
     - name: load postgis
       sudo_user: postgres
-      command: /usr/bin/psql -d {{ dbname }} -f /usr/share/postgresql/9.1/contrib/postgis-1.5/postgis.sql
+      command: /usr/bin/psql -d {{ dbname }} -f /usr/share/postgresql/9.3/contrib/postgis-2.1/postgis.sql
       when: postgres_create_returncode['changed']
 
     - name: load spatial_ref_sys
       sudo_user: postgres
-      command: /usr/bin/psql -d {{ dbname }} -f /usr/share/postgresql/9.1/contrib/postgis-1.5/spatial_ref_sys.sql
+      command: /usr/bin/psql -d {{ dbname }} -f /usr/share/postgresql/9.3/contrib/postgis-2.1/spatial_ref_sys.sql
       when: postgres_create_returncode['changed']
 
     - name: load cleangeometry
@@ -177,6 +174,8 @@
       sudo_user: postgres
       command: /usr/bin/psql -d {{ dbname }} -f /tmp/fix_perms.sql 
       when: postgres_create_returncode['changed']
+
+    - lineinfile: dest=/usr/local/venv/cogs/lib/python2.7/site-packages/django/contrib/gis/geos/libgeos.py regexp="^    ver = geos_version()" line="    ver = geos_version().decode().split(' ')[0]"
 
     - name: syncdb
       tags:

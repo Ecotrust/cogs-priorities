@@ -1,11 +1,8 @@
 Vagrant::Config.run do |config|
 
   config.vm.define "dev" do |dev|
-    # dev.vm.box = "precise64"
-    # dev.vm.box_url = "http://files.vagrantup.com/precise64.box"
-    # based on the precise64 box but the expensive updates have already been done
-    dev.vm.box = "precise64-custom"
-    dev.vm.box_url = "http://labs.ecotrust.org/vagrant_boxes/precise64-custom.box"
+    dev.vm.box = "trusty64"
+    dev.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
     
     dev.vm.customize [
             'modifyvm', :id,
@@ -22,8 +19,8 @@ Vagrant::Config.run do |config|
   # We never ever, ever ssh into this box... it will be managed solely through ansible
   #  just as the production server will be
   config.vm.define "stage" do |stage|
-    stage.vm.box = "precise64-custom"
-    stage.vm.box_url = "http://labs.ecotrust.org/vagrant_boxes/precise64-custom.box"
+    stage.vm.box = "trusty64"
+    stage.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
     stage.vm.customize [
             'modifyvm', :id,
             "--memory", 1668,
